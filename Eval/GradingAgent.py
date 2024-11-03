@@ -3,8 +3,6 @@ import torch
 import json
 
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
-# if device.type == 'mps': print("Using MPS backend.")
-# else: print("MPS not available. Using CPU.")
 
 model_name = 'meta-llama/Llama-3.2-1B'
 tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -20,7 +18,7 @@ def getEval(transcript_text, overall_score, recommendation_score, structured_ans
     f"Transcript: {transcript_text}\n"
     f"Overall Score: {overall_score}, Recommendation Score: {recommendation_score}, Structured Answers Score: {structured_answers_score}.\n"
     f"Evaluation:\n\n"
-)
+    )
 
 
     # 确保模型在设备上
@@ -42,15 +40,15 @@ def getEval(transcript_text, overall_score, recommendation_score, structured_ans
 
     return evaluation
 
+if __name__ == "__main__":
+    with open('../Labels/combined_data.json', 'r') as file:
+        data = json.load(file)
 
-with open('../Labels/combined_data.json', 'r') as file:
-    data = json.load(file)
-
-for p in data:
-    transcript_text = data[p]["Transcript"]
-    overall_score = data[p]["Overall"]
-    recommendation_score = data[p]["RecommendHiring"]
-    structured_answers_score = data[p]["StructuredAnswers"]
-    print(f"Candidate {p} Evaluation:\n", getEval(transcript_text, overall_score, recommendation_score, structured_answers_score))
-    print("\n" + "="*50 + "\n")
-    break
+    for p in data:
+        transcript_text = data[p]["Transcript"]
+        overall_score = data[p]["Overall"]
+        recommendation_score = data[p]["RecommendHiring"]
+        structured_answers_score = data[p]["StructuredAnswers"]
+        print(f"Candidate {p} Evaluation:\n", getEval(transcript_text, overall_score, recommendation_score, structured_answers_score))
+        print("\n" + "="*50 + "\n")
+        break

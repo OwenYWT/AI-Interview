@@ -10,19 +10,9 @@ from transformers import AutoTokenizer, AutoModel
 
 # 环境变量设置以抑制 parallelism 警告
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-# 参数范围设定
-param_grid = {
-    'n_estimators': [100, 200, 300],
-    'max_depth': [10, 20, 30],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4],
-    'max_features': ['sqrt', 'log2']
-}
-
-# 加载模型与设备选择
 device = torch.device("mps" if torch.backends.mps.is_built() else "cpu")
 model_name = "sentence-transformers/all-MiniLM-L6-v2"
+# 加载模型与设备选择
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModel.from_pretrained(model_name).to(device)
 
@@ -56,26 +46,42 @@ def train_and_save_model(X, y, model_path):
     joblib.dump(grid_search, model_path)
     print(f"Model saved to {model_path}")
 
-# 加载数据
-file_path = '../Labels/combined_data.json'  # 替换为你的文件路径
-with open(file_path, 'r') as f:
-    data = json.load(f)
+def load_and_predict(Transcript, model_path):
+    X = get_sentence_embedding(Transcript).reshape(1, -1)
+    model = joblib.load(model_path)
+    y_pred = model.predict(X)
+    return y_pred[0]
 
-# 数据解析并创建 DataFrame
-records = [{
-    "Transcript": values["Transcript"],
-    "Overall": float(values["Overall"]),
-    "RecommendHiring": float(values["RecommendHiring"]),
-    "StructuredAnswers": float(values["StructuredAnswers"])
-} for values in data.values()]
+if __name__ == "__main__":
+    # 参数范围设定
+    param_grid = {
+        'n_estimators': [100, 200, 300],
+        'max_depth': [10, 20, 30],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4],
+        'max_features': ['sqrt', 'log2']
+    }
 
-df = pd.DataFrame(records)
+    # 加载数据
+    file_path = '../Labels/combined_data.json'  # 替换为你的文件路径
+    with open(file_path, 'r') as f:
+        data = json.load(f)
 
-# 生成文本嵌入
-df['Embeddings'] = df['Transcript'].apply(get_sentence_embedding)
-X = list(df['Embeddings'])
+    # 数据解析并创建 DataFrame
+    records = [{
+        "Transcript": values["Transcript"],
+        "Overall": float(values["Overall"]),
+        "RecommendHiring": float(values["RecommendHiring"]),
+        "StructuredAnswers": float(values["StructuredAnswers"])
+    } for values in data.values()]
 
-# 训练并保存模型
-train_and_save_model(X, df['Overall'], '../Models/y_overall_model.joblib')
-train_and_save_model(X, df['RecommendHiring'], '../Models/y_recommend_hiring_model.joblib')
-train_and_save_model(X, df['StructuredAnswers'], '../Models/y_structured_answers_model.joblib')
+    df = pd.DataFrame(records)
+
+    # 生成文本嵌入
+    df['Embeddings'] = df['Transcript'].apply(get_sentence_embedding)
+    X = list(df['Embeddings'])
+
+    # 训练并保存模型
+    train_and_save_model(X, df['Overall'], '../Models/y_overall_model.joblib')
+    train_and_save_model(X, df['RecommendHiring'], '../Models/y_recommend_hiring_model.joblib')
+    train_and_save_model(X, df['StructuredAnswers'], '../Models/y_structured_answers_model.joblib')
