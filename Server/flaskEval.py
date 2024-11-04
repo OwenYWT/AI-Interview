@@ -25,7 +25,7 @@ def process_text():
     # # # 在此处进行文字处理逻辑
     # # response_text = f"Received text: {text}"
     # # 返回 JSON 响应
-    return jsonify({'evaluation': evaluation})
+    return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
     
 if __name__ == '__main__':
     app.run(debug=True)
