@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Container, Box, TextField, IconButton, Typography } from '@mui/material';
+import { Container, Box, TextField, IconButton, Typography, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
@@ -17,15 +18,28 @@ const ChatPage = () => {
         }
     };
 
+    const handleGetFeedback = () => {
+        const evaluation = {
+            overall: 'Overall, a solid performance with room for growth in specific areas.',
+        };
+
+        const overall_score = 8.5;
+        const recommendation_score = 7.0;
+        const structured_answers_score = 9.0;
+
+        navigate('/feedback', {
+            state: { evaluation, overall_score, recommendation_score, structured_answers_score },
+        });
+    };
+
     return (
         <Container maxWidth="md" style={{ height: '90vh', display: 'flex', flexDirection: 'column', padding: '20px' }}>
             <Box display="flex" alignItems="center" justifyContent="space-between" style={{ marginBottom: '20px' }}>
-                {/* Back Button */}
                 <IconButton onClick={() => navigate(-1)}>
                     <ArrowBackIcon fontSize="large" />
                 </IconButton>
 
-                <Typography variant="h5" align="center" style={{ fontWeight: 'bold', flexGrow: 1 }}>
+                <Typography variant="h4" align="center" style={{ fontWeight: 'bold', flexGrow: 1 }}>
                     Chat with HireSmart
                 </Typography>
             </Box>
@@ -77,15 +91,31 @@ const ChatPage = () => {
                     InputProps={{ style: { fontSize: '1rem' } }}
                 />
 
-                {/* Microphone Button */}
                 <IconButton color="primary" onClick={() => alert('Microphone activated')}>
                     <MicIcon fontSize="large" />
                 </IconButton>
 
-                {/* Send Button */}
                 <IconButton color="primary" onClick={handleSendMessage}>
                     <SendIcon fontSize="large" />
                 </IconButton>
+            </Box>
+
+            <Box display="flex" justifyContent="center" style={{ marginTop: '15px' }}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    endIcon={<ArrowForwardIosIcon />}
+                    onClick={handleGetFeedback}
+                    style={{
+                        borderRadius: '20px',
+                        padding: '10px 20px',
+                        maxWidth: '300px',
+                        fontSize: '16px',
+                        textTransform: 'none',
+                    }}
+                >
+                    Get Feedback
+                </Button>
             </Box>
         </Container>
     );

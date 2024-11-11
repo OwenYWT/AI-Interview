@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import WelcomePage from './components/WelcomePage';
 import JobSelectionPage from './components/JobSelectionPage';
 import ChatPage from './components/ChatPage';
+import FeedbackPage from "./components/FeedbackPage";
 
 const App = () => {
     return (
@@ -12,6 +13,7 @@ const App = () => {
             <Routes>
                 <Route path="/" element={<WelcomePage />} />
                 <Route path="/job-selection" element={<JobSelectionPage />} />
+                <Route path="/feedback" element={<FeedbackPage />} />
                 <Route path="/chat" element={<ChatPage />} />
             </Routes>
         </Router>
