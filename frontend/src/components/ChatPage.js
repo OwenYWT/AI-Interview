@@ -1,28 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Box, TextField, IconButton, Typography, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { getItem, setItem, removeItem } from "../localStorage";
 
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const savedMessages = getItem('messages', []);
+        setMessages(savedMessages);
+    }, []);
+
     const handleSendMessage = () => {
         if (input.trim()) {
-            setMessages([...messages, { text: input, sender: 'user' }]);
+            const newMessages = [...messages, { text: input, sender: 'user' }];
+            setMessages(newMessages);
+            setItem('messages', newMessages);
             setInput('');
         }
+    };
+
+    const handleClearMessages = () => {
+        setMessages([]);
+        removeItem('messages');
     };
 
     const handleGetFeedback = () => {
         const evaluation = {
             overall: 'Overall, a solid performance with room for growth in specific areas.',
         };
-
         const overall_score = 8.5;
         const recommendation_score = 7.0;
         const structured_answers_score = 9.0;
@@ -42,6 +55,10 @@ const ChatPage = () => {
                 <Typography variant="h4" align="center" style={{ fontWeight: 'bold', flexGrow: 1 }}>
                     Chat with HireSmart
                 </Typography>
+
+                <IconButton onClick={handleClearMessages} color="primary" title="Clear Chat">
+                    <DeleteIcon fontSize="large" />
+                </IconButton>
             </Box>
 
             <Box
