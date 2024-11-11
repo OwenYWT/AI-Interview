@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Button, IconButton } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { getItem, setItem } from "../localStorage";
 
 const FeedbackPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { evaluation, overall_score, recommendation_score, structured_answers_score } = location.state || {};
+
+    const [feedback, setFeedback] = useState({
+        evaluation: { overall: "Overall evaluation is not available." },
+        overall_score: "Overall score is not available.",
+        recommendation_score: "Recommendation score is not available.",
+        structured_answers_score: "Structured answers score is not available.",
+    });
+
+    useEffect(() => {
+        if (location.state) {
+            setFeedback(location.state);
+            setItem('feedback', location.state);
+        } else {
+            const savedFeedback = getItem('feedback', feedback);
+            setFeedback(savedFeedback);
+        }
+    }, [location.state]);
 
     return (
         <Container maxWidth="md" style={{ padding: '20px', textAlign: 'center' }}>
@@ -26,7 +43,7 @@ const FeedbackPage = () => {
                     Overall Evaluation:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
-                    {evaluation?.overall || "Overall evaluation is not available."}
+                    {feedback.evaluation?.overall}
                 </Typography>
 
                 {/* Score Sections */}
@@ -34,21 +51,21 @@ const FeedbackPage = () => {
                     Overall Score:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
-                    {overall_score !== undefined ? overall_score : "Overall score is not available."}
+                    {feedback.overall_score}
                 </Typography>
 
                 <Typography variant="h6" gutterBottom>
                     Recommendation Score:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
-                    {recommendation_score !== undefined ? recommendation_score : "Recommendation score is not available."}
+                    {feedback.recommendation_score}
                 </Typography>
 
                 <Typography variant="h6" gutterBottom>
                     Structured Answers Score:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
-                    {structured_answers_score !== undefined ? structured_answers_score : "Structured answers score is not available."}
+                    {feedback.structured_answers_score}
                 </Typography>
             </Box>
 
