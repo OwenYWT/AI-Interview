@@ -54,7 +54,7 @@ const JobSelectionPage = () => {
         };
         socket.emit('init_simulation', payload);
 
-        navigate('/chat');
+        navigate('/info');
     };
 
     const handleFileUpload = (event) => {
