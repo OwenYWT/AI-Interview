@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit
 import base64
 import sys, os
-sys.path.append("../Eval") 
+# sys.path.append("../Eval") 
 import torch
 from transformers import pipeline
 import datetime
@@ -18,11 +18,13 @@ pipe = pipeline(
 chat_histories = {} #format {session key: information array []}
 
 class chat_history:
-        def __init__(self, system_prompt, candidate_name="") -> None:
+        def __init__(self, system_prompt, session_id, candidate_name="") -> None:
                 self.messages = []
+                self.session_id = session_id
                 self.add_message("system", system_prompt)
                 self.candidate_name = candidate_name
-                self.general_system_prompt = ""
+                self.system_prompt = system_prompt
+                self.resume_filename = ""
         def add_message(self, role, content):
                 self.messages.append({"role": role, "content": content})
         def get_message(self):
