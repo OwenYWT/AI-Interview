@@ -6,6 +6,7 @@ import WelcomePage from './components/WelcomePage';
 import JobSelectionPage from './components/JobSelectionPage';
 import ChatPage from './components/ChatPage';
 import FeedbackPage from "./components/FeedbackPage";
+import DisplayUploadedFilePage from "./components/DisplayUploadedFilePage";
 
 const App = () => {
     return (
@@ -15,6 +16,7 @@ const App = () => {
                 <Route path="/job-selection" element={<JobSelectionPage />} />
                 <Route path="/feedback" element={<FeedbackPage />} />
                 <Route path="/chat" element={<ChatPage />} />
+                <Route path="/display-uploaded-file" element={<DisplayUploadedFilePage />} />
             </Routes>
         </Router>
     );
