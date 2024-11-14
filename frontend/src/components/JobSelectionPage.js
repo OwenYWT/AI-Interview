@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import { getItem, setItem } from "../localStorage";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:6000/");
-
+const socket = io("http://localhost:7230", {
+    transports: ["websocket"],
+    reconnectionAttempts: 5,
+});
 
 const JobSelectionPage = () => {
     const [jobDescription, setJobDescription] = useState('');
@@ -25,12 +27,23 @@ const JobSelectionPage = () => {
     };
 
     useEffect(() => {
+
         const savedDescription = getItem('jobDescription', '');
         const savedFile = getItem('uploadedFile', null);
         setJobDescription(savedDescription);
         if (savedFile) setUploadedFile(savedFile);
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection Error:', error);
+        });
+
         return () => {
-            socket.off('init_simulation');
+            socket.off('connect');
+            socket.off('connect_error');
         };
     }, []);
 
