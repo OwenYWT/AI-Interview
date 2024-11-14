@@ -87,7 +87,7 @@ def addition_information(sid, data):
 
 @socketio.on('llm_completion')
 def llm_completion(sid, data):
-	
+	return 400, "not finished"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=6000)
