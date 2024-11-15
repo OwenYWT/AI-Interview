@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Text Data</title>
+</head>
+<body>
+
+<h1>Sending Text Data to Server</h1>
+<p>Check the console for response details.</p>
+
+<script>
+    // JavaScript code to send POST request
+    const data = {
+        text: `Interviewer: Um please tell me about yourself.|Interviewee: Okay um my name's Evan Evan Muray I'm a junior here at MIT in computer science. I'm originally from Louisville Kentucky. And uh yeah I currently live across the river. I heard about this study through e-mail. So thought I'd check it out.|Interviewer: So I lived in Louisville.|Interviewee: You did?|Interviewer: Yeah.|Interviewee: Nice.|Interviewer: Anyway. So can you tell me about a time when you served as a leader?|Interviewee: A leader? Uh sure. Um. A good example of that would be uh some of my extra curricular work activities so I'm involved in uh two activities in general that showcase my leadership skills. One is Camp Kesem MIT which is a student organization here on campus at MIT uh each summer the organization puts on a summer camp for children who's parents have or have had cancer. Um and I serve on the coordinator board for this organization. Um in the past I was in charge of handling applications and contacting families of campers who'd would come to our camp and being in contact with them throughout the year send them newsletters send them updates plan reunions for them. Uh this year I am in charge of asking the students on campus and getting students to apply to become counselors for our camp and (inaudible) with students so I work as a coordinator I actually have a co-coordinator we usually work in tandem. The other activity is dance troop. It's another student organization here at MIT where we put on a show each year and dance have some fun it's a dance show and I'm a choreography for that organization as well. I lead a dance teach people some dance moves for some fun.|Interviewer: Oh that's all very excellent.|Interviewee: Thanks.|Interviewer: So can you tell me a time when you were working on a team and you faced a challenge how did you solve the problem?|Interviewee: Sure uh I think a great example of that would be this past January I participated in a web design competition here on campus 6470 I was on a team with my girlfriend and a mutual friend of ours. It's always different working in a group with your friends as opposed to just hanging out with them. There was a bit of conflict about how we wanted the website to go. We had different visions for how we wanted it to look and I think for me the best way that I handled that was to sort of be willing to compromise because I think it's a very important skill and also just listening active listening. I was listening to why she wanted to make certain changes to the website. And by doing that um I was able to uh figure out uh sort of like a common ground that we could work towards I think we eventually did hit um and were able to move forward with this one conflict that I definitely remember because it was pretty big at the time but I mean we needed to get through it.|Interviewer: So tell me one of your greatest weaknesses and what you're doing to overcome it.|Interviewee: My greatest weakness... Hm. Okay. Uh. I'd say my one of my bigger weaknesses is uh I'd say probably uh self-starting actually. It's something I've been working it's like my goal for this year to work on. In the past I would do my classes take my classes and really just kind of do my schoolwork significantly outside of classes. If there's one thing I learned from being around all these amazing people here at MIT is if you have an idea just go for it. It's very easy especially here there's resources to do so and it's something that I want to work on I have some ideas for projects I want to start on my own. It's always been an issue for me to actually start on things and come up with ideas and really get started on certain projects. But this I plan on starting my own website and doing some ideas with that and hopefully I will gain some more experience in computer sciences.|Interviewer: Excellent. So uh think of a job you'd like to get hired for why do you think we should hire you?|Interviewee: Uh I think one of my best qualities is the ability to really quickly coming to MIT for example I came to MIT with very little experience in the field computer science. Many of my past internships I've been going to I don't have much experience but I pride myself in the sort of grasp ideas quickly and uh build on top of those and use those to build solutions to problems. I find that uh after doing some examples of a certain problem or just playing around with it for a little bit I can get to work on using that sort of technology. In the past couple internships I've had to deal with new languages new framework and I think that definitely more then compensates for any experience I'm lacking.|Interviewer: Excellent. Thanks again for coming again.|Interviewee: No problem thank you for having me.|Interviewer: Of course!`
+    };
+
+    fetch('http://127.0.0.1:5000/process_text', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(responseData => {
+        console.log('Response:', responseData);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+</script>
+
+</body>
+</html>

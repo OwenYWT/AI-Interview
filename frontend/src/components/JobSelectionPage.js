@@ -4,9 +4,16 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from 'react-router-dom';
 import { getItem, setItem } from "../localStorage";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:7230", {
+    transports: ["websocket"],
+    reconnectionAttempts: 5,
+});
 
 const JobSelectionPage = () => {
     const [jobDescription, setJobDescription] = useState('');
+    const [uploadedFile, setUploadedFile] = useState(null);
     const navigate = useNavigate();
 
     const roleDescriptions = {
@@ -20,8 +27,24 @@ const JobSelectionPage = () => {
     };
 
     useEffect(() => {
+
         const savedDescription = getItem('jobDescription', '');
+        const savedFile = getItem('uploadedFile', null);
         setJobDescription(savedDescription);
+        if (savedFile) setUploadedFile(savedFile);
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection Error:', error);
+        });
+
+        return () => {
+            socket.off('connect');
+            socket.off('connect_error');
+        };
     }, []);
 
     const handleJobRoleClick = (role) => {
@@ -31,8 +54,34 @@ const JobSelectionPage = () => {
     };
 
     const handleGenerateQuestions = () => {
+        const sessionID = Date.now();
+
         setItem('jobDescription', jobDescription);
-        navigate('/chat');
+
+        const payload = {
+            session_id: sessionID,
+            authorization_token: "our_auth_token",
+            job_description: jobDescription,
+            resume_filename: uploadedFile ? uploadedFile.name : null,
+            resume_file: uploadedFile ? uploadedFile.base64 : null,
+        };
+        socket.emit('init_simulation', payload);
+
+        navigate('/info');
+    };
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64String = e.target.result.split(',')[1];
+                const fileData = { name: file.name, type: file.type, base64: base64String };
+                setItem('uploadedFile', fileData);
+                setUploadedFile(fileData);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     return (
@@ -45,7 +94,6 @@ const JobSelectionPage = () => {
                 Select a job description
             </Typography>
 
-            {/* Job Role Buttons */}
             <Box display="flex" flexWrap="wrap" justifyContent="center" gap={1} marginBottom={3}>
                 {Object.keys(roleDescriptions).map((role) => (
                     <Button
@@ -76,7 +124,6 @@ const JobSelectionPage = () => {
                 </Button>
             </Box>
 
-            {/* Text Area */}
             <Box style={{ maxWidth: '1500px', width: '100%', margin: '0 auto' }}>
                 <TextField
                     placeholder="Select a job role above or enter a custom description"
@@ -100,7 +147,6 @@ const JobSelectionPage = () => {
                 />
             </Box>
 
-            {/* Resume Upload */}
             <Box
                 display="flex"
                 flexDirection="column"
@@ -118,17 +164,28 @@ const JobSelectionPage = () => {
                     marginBottom: '30px',
                 }}
             >
-                <Box display="flex" flexDirection="column" alignItems="center">
-                    <IconButton style={{ marginBottom: '2px' }}>
+                <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                    id="file-upload"
+                />
+                <label htmlFor="file-upload">
+                    <IconButton component="span" style={{ marginBottom: '2px' }}>
                         <UploadFileIcon color="primary" style={{ fontSize: '2rem' }} />
                     </IconButton>
-                    <Typography variant="body1" align="center" style={{ fontSize: '0.875rem' }}>
-                        Upload your resume and cover letter for improved, tailored questions!
+                </label>
+                {uploadedFile && (
+                    <Typography variant="body2" align="center" style={{ fontSize: '0.875rem', marginTop: '10px' }}>
+                        Uploaded file: {uploadedFile.name}
                     </Typography>
-                </Box>
+                )}
+                <Typography variant="body1" align="center" style={{ fontSize: '0.875rem' }}>
+                    Upload your resume and cover letter for improved, tailored questions!
+                </Typography>
             </Box>
 
-            {/* Generate Questions Button */}
             <Button
                 variant="contained"
                 color="primary"
