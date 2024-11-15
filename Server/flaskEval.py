@@ -6,6 +6,7 @@ from GradingAgent import getEval
 import torch
 from transformers import pipeline
 import datetime
+from flask_cors import CORS
 
 model_id = "meta-llama/Llama-3.2-1B-Instruct"
 pipe = pipeline(
@@ -42,6 +43,7 @@ Be casual, short, and conversational. """
         return prompt
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/process_text', methods=['POST'])
 def process_text():

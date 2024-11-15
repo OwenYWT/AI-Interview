@@ -2,5 +2,14 @@ train:
   batch_size: 8
   learning_rate: 0.00005
   max_epochs: 100
-  device: "cuda"
-  data_path: "data.json"
+  checkpoint_path: "models/checkpoint.pth"
+  data_path: "data/data.json"
+  test_data_path: "data/val_data.json"
+  train_data_path: "data/train_data.json"
+  val_data_path: "data/val_data.json"
+
+eval:
+  grading_model: "base_model"
+  tree_overall_model: "data/y_overall_model.joblib"
+  tree_recommend_hiring_model: "data/y_recommend_hiring_model.joblib"
+  tree_structured_answers_model: "data/y_structured_answers_model.joblib"
