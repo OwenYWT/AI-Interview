@@ -1,9 +1,14 @@
 from flask import Flask, jsonify
 from flask_socketio import SocketIO, emit
+from transformers import pipeline
+import torch
 import base64
 import os
 import datetime
 import pypdf
+
+# If you do not want to load model for testing, set this variable to False
+RUN_WITH_MODEL = True
 
 RESUME_FOLDER = 'resumes'
 os.makedirs(RESUME_FOLDER, exist_ok=True)
@@ -12,6 +17,16 @@ app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")  # Ensures compatibility with Flask
 
 interview_histories = {} #format {session_id: InterviewInstance}
+
+pipe = None
+if not RUN_WITH_MODEL:
+    model_id = "meta-llama/Llama-3.2-1B-Instruct"
+    pipe = pipeline(
+        "text-generation",
+        model=model_id,
+        torch_dtype=torch.bfloat16,
+        device_map="auto",
+    )
 
 class InterviewInstance:
         def __init__(self, session_id, system_prompt=None, authorization_token=None, job_description=None) -> None:
@@ -41,6 +56,13 @@ class InterviewInstance:
                 self.messages.append({"role": role, "content": content})
         def get_message(self):
                 return self.messages
+        def generate_resume_summary(self):
+                if self.resume_file_path is not None and self.resume_file_path != "":
+                    resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
+                    if RUN_WITH_MODEL:
+                        self.resume_summary = pipe({"role": "system", "content": resume_summary_prompt}, max_new_token=256)
+                    
+                    
 
 def system_prompt_helper(interviewer_name=None, candidate_name=None, company=None, position_name=None, qualifications=None, behavioral_count=0, technical_count=0, expected_duration=30):
         company = "" if company is None or company=="" else " at "+company
@@ -110,8 +132,10 @@ def handle_connect(data):
         interview_histories[session_id].resume_file_path = resume_file_path
         interview_histories[session_id].resume_filename = resume_filename
         emit('upload_status', {'success': True, 'message': f"New session created with id {session_id}"})
+        interview_histories[session_id].generate_resume_summary()
     else:
         emit('upload_status', {'success': False, 'message': f"Duplicated session found with id {session_id}. Aborted."})
+    
 
 @socketio.on('addition_information')
 def handle_additional_information(data):
