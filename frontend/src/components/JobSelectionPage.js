@@ -67,7 +67,16 @@ const JobSelectionPage = () => {
         };
         socket.emit('init_simulation', payload);
 
-        navigate('/info');
+        socket.on('upload_status', (status) => {
+            // console.log('Connected to server');
+            // console.log(status, status['success']);
+            if (status['success']==true) {
+                navigate('/info');
+            } else {
+                console.log("Backend server rejected", status)
+            }
+        });
+        
     };
 
     const handleFileUpload = (event) => {
@@ -182,7 +191,7 @@ const JobSelectionPage = () => {
                     </Typography>
                 )}
                 <Typography variant="body1" align="center" style={{ fontSize: '0.875rem' }}>
-                    Upload your resume and cover letter for improved, tailored questions!
+                    Optionally upload your resume and cover letter for improved, tailored questions!
                 </Typography>
             </Box>
 
