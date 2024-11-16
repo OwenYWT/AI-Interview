@@ -51,6 +51,7 @@ class InterviewInstance:
                 self.company_name = None
                 self.position_name = None
                 self.converstation_counter = 0
+                self.interview_procedure = [0] #0 for starting up, 1 for behavioral, 2 for technical, 3 for wrapup 
 
         def add_message(self, role, content):
                 if role not in ["system", "user", "assistant"]:
@@ -60,7 +61,7 @@ class InterviewInstance:
                 if (role == 'user'):
                     self.converstation_counter += 1
         def get_message(self):
-                return self.messages
+                return self.messages.copy().append({"role": "system", "content": self.prepare_realtime_guidance_prompt()})
         def generate_resume_summary(self):
                 if self.resume_file_path is not None and self.resume_file_path != "":
                     resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
@@ -71,6 +72,35 @@ class InterviewInstance:
                                                           position_name=self.position_name, qualifications=self.job_description, 
                                                           behavioral_count=self.behavioral_question_count, technical_count=self.technical_question_count, 
                                                           technical_difficulty=self.technical_question_difficulty)
+                self.interview_procedure.extend([1 for i in range(self.behavioral_question_count)])
+                self.interview_procedure.extend([2 for i in range(self.technical_question_count)])
+                self.interview_procedure.append(3)
+        def prepare_realtime_guidance_prompt(self):
+            match self.interview_procedure[0]:
+                case 0:
+                    return """It's just the start of the interview so be chill. Start with kind greeting. Try to get to know more about each other. 
+Make up some personal stories if the candidate asked such as what you eat for lunch. 
+If you think we are good to move on to the behavioral interview part, add <NEXT> at the beginning of response."""
+                case 1:
+                    return """Come up with a behavioral question that is closely related to the job that the candidate is applying for. You can give the candidate some time
+to think about it. If you think you have enough from the candidate and ready to move on to the technical question, add <NEXT> at the beginning of response."""
+                case 2:
+                    return """Come up with a technical question that is closely related to the job that the candidate is applying for. You can give the candidate some time
+to think about it. Do not give away the answer even if the candidate ask for it. Be careful with your hint. 
+If you think you have enough from the candidate and ready to wrap up this interview, add <NEXT> at the beginning of response."""
+                case 3:
+                    return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <STOP> at the beginning of response.
+                """
+        def pipe_inference(self, verbose=False):
+            if RUN_WITH_MODEL:
+                outputs = pipe(self.get_message(),max_new_tokens=256)
+                response = outputs[0]['generated_text'][-1]
+            else:
+                response = "TEST RESPONSE FROM LLM"
+            self.add_message(role="assistant", content=response)
+            if verbose:
+                print("Interviewer response:", response)
+            return response
 
 def system_prompt_helper(interviewer_name=None, candidate_name=None, company=None, position_name=None, qualifications=None, behavioral_count=1, 
                          technical_count=1, expected_duration=30, technical_difficulty="medium"):
@@ -201,8 +231,20 @@ def handle_llm_completion(data):
     Returns:
         None
     """
+    session_id = data['session_id']
+    input_content = data['input_content']
+    if session_id in interview_histories:
+        emit('completion_status', {'status': 'received', 'message': 'Start inference'}, 200)
+    elif len(input_content==0) or input_content == "":
+        emit('completion_status', {'status': 'failed', 'message': 'Cannot work on empty input'}, 400)
+        return
+    else:
+        emit('completion_status', {'status': 'failed', 'message': 'session_id not found'}, 400)
+        return
+    interview_histories[session_id].add_message(role="user", content=input_content)
+    response = interview_histories[session_id].pipe_inference()
+    emit('completion_status', {'status': 'success', 'message': 'Inference completed', 'response': response}, 200)
     
-    emit('completion_status', {'status': 'error', 'message': 'Not implemented'}, 400)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, port=7230)
