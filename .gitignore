@@ -3,3 +3,4 @@
 __pycache__
 /frontend/node_modules
 base_model/models/*
+/frontend/node_modules/*
