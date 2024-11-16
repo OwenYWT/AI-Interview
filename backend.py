@@ -16,8 +16,8 @@ os.makedirs(RESUME_FOLDER, exist_ok=True)
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")  # Ensures compatibility with Flask
 
-interview_histories = {} #format {session_id: InterviewInstance}
 
+interview_histories = {} #format {session_id: InterviewInstance}
 pipe = None
 if not RUN_WITH_MODEL:
     model_id = "meta-llama/Llama-3.2-1B-Instruct"
@@ -48,7 +48,7 @@ class InterviewInstance:
                 self.behavioral_question_count = 0
                 self.expectedDuration = 10
                 self.company_name = None
-                self.position_title = None
+                self.position_name = None
 
         def add_message(self, role, content):
                 if role not in ["system", " user", "assistant"]:
@@ -61,16 +61,20 @@ class InterviewInstance:
                     resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
                     if RUN_WITH_MODEL:
                         self.resume_summary = pipe({"role": "system", "content": resume_summary_prompt}, max_new_token=256)
-                    
-                    
+        def prepare_system_prompt(self):
+                self.system_prompt = system_prompt_helper(interviewer_name="Burdell", candidate_name=self.preferred_name, company=self.company_name, 
+                                                          position_name=self.position_name, qualifications=self.job_description, 
+                                                          behavioral_count=self.behavioral_question_count, technical_count=self.technical_question_count, 
+                                                          technical_difficulty=self.technical_question_difficulty)
 
-def system_prompt_helper(interviewer_name=None, candidate_name=None, company=None, position_name=None, qualifications=None, behavioral_count=0, technical_count=0, expected_duration=30):
+def system_prompt_helper(interviewer_name=None, candidate_name=None, company=None, position_name=None, qualifications=None, behavioral_count=1, 
+                         technical_count=1, expected_duration=30, technical_difficulty="medium"):
         company = "" if company is None or company=="" else " at "+company
         interviewer_name_p = (f"Your name is {interviewer_name}.") if interviewer_name is not None and interviewer_name!="" else ""
         candidate_name_p = (f"The candidate you are interviewing today is {candidate_name}.") if candidate_name is not None and candidate_name!="" else ""
         position_name_p = (f"The position the candidate applied for is {position_name}.") if position_name is not None and position_name!="" else ""
         qualifications_p = (f"The qualifications required includes {qualifications}.") if qualifications is not None and qualifications!="" else ""
-        question_count_p = f"This interview consist of {behavioral_count} behaviroal question and {technical_count} technical question. "
+        question_count_p = f"This interview consist of {behavioral_count} behaviroal question and {technical_count} technical question with {technical_difficulty} difficulty. "
         prompt = f"""You are the interviewer{company}. {interviewer_name_p} {candidate_name_p} {position_name_p} {qualifications_p} {question_count_p}
 Date and time now: {datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y")}. 
 During the entire interview, DO NOT disclose the answer to the candidate or giving hints that is directly related to the answer. 
@@ -159,11 +163,12 @@ def handle_additional_information(data):
         interview_histories[session_id].preferred_name = preferred_name
         interview_histories[session_id].company_name = company_name
         interview_histories[session_id].position_title = position_title
-
     print(f"Session {session_id} - Behavioral: {behavioral_question_count}, Technical: {technical_question_count}")
     print(data)
     print(interview_histories[session_id])
     emit('info_received', {'success': True, 'session_id': session_id})
+    interview_histories[session_id].prepare_system_prompt()
+
 
 @socketio.on('llm_completion')
 def handle_llm_completion(data):
