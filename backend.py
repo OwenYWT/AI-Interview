@@ -4,7 +4,7 @@ from transformers import pipeline
 import torch
 import base64
 import os
-import datetime
+import datetime, time
 import pypdf
 
 # If you do not want to load model for testing, set this variable to False
@@ -33,8 +33,9 @@ class InterviewInstance:
                 self.session_id = session_id
                 self.authorization_token = authorization_token if authorization_token is not None else ""
                 self.messages = [] 
+                self.messages_timestamp = []
                 self.job_description = job_description if job_description is not None else ""
-                # self.candidate_name = ""
+                # self.candidate_name = ""  #use prefer name for privacy
                 self.preferred_name = None
                 self.system_prompt = system_prompt if system_prompt is not None else ""
                 if system_prompt is not None:
@@ -49,11 +50,15 @@ class InterviewInstance:
                 self.expected_duration = 10
                 self.company_name = None
                 self.position_name = None
+                self.converstation_counter = 0
 
         def add_message(self, role, content):
-                if role not in ["system", " user", "assistant"]:
+                if role not in ["system", "user", "assistant"]:
                     raise Exception(f"Invalid role name. Role name {role} not recognized.")
                 self.messages.append({"role": role, "content": content})
+                self.messages_timestamp.append(int(time.time()))
+                if (role == 'user'):
+                    self.converstation_counter += 1
         def get_message(self):
                 return self.messages
         def generate_resume_summary(self):
