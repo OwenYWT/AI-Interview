@@ -46,7 +46,7 @@ class InterviewInstance:
                 self.technical_question_difficulty = None
                 self.technical_question_count = 1
                 self.behavioral_question_count = 0
-                self.expectedDuration = 10
+                self.expected_duration = 10
                 self.company_name = None
                 self.position_name = None
 
@@ -108,12 +108,17 @@ def handle_connect():
 
 @socketio.on('init_simulation')
 def handle_connect(data):
-	# Varibles expected from frontend
-    # 'session_id'(int): a timestamp used to identify a session. Used as unique key for history
-    # 'job_description' (string): job description copied from job listing
-    # 'resume_filename'(string): file name of resume
-    # 'resume_file'(base64 file): actual file in base64
-    
+    """ Handles communication on the 2nd page
+    Args:
+        data: data payload received from socket. See list of expected fields in the payload
+        'session_id'(int): a timestamp used to identify a session. Used as unique key for history
+        'job_description' (string): job description copied from job listing
+        'resume_filename'(string): file name of resume
+        'resume_file'(base64 file): actual file in base64
+    Returns:
+        None
+    """
+
     # print(data)
     session_id = data['session_id']
     authorization_token = data['authorization_token'] if data['authorization_token'] is not None else "no_auth_token"
@@ -143,15 +148,26 @@ def handle_connect(data):
 
 @socketio.on('addition_information')
 def handle_additional_information(data):
-    # 'behavioral_question_count'(int): number of behavioral question expected
-    # 'technical_question_count'(int): number of technical question expected
-    # 'expectedDuration'(int): expected duration in terms of minutes
-    # 'preferName'(string): Preferred name that will be used during the interview
+    """ Handles communication on the 3rd page
+    Args:
+        data: data payload received from socket. See list of expected fields in the payload
+        'session_id'(int): a key used to identify a session created in second page. Used as unique key for history
+        'behavioral_question_count'(int): number of behavioral question expected
+        'technical_question_count'(int): number of technical question expected
+        'expected_duration'(int): expected duration in terms of minutes
+        'preferred_name'(string): Preferred name that will be used during the interview
+        'company_name'(string): company name
+        'position_title'(string): Title of the position that the candidate is applying for
+        'technical_question_difficulty'(string): string from ['easy', 'medium', 'hard']. Not validated for now
+    
+    Returns: 
+        None
+    """
     session_id = data['session_id']
     behavioral_question_count = data.get('behavioral_question_count', 1)
     technical_question_count = data.get('technical_question_count', 1)
     technical_question_difficulty = data.get('technical_question_difficulty', 'medium')
-    expectedDuration = data.get('expectedDuration', 10)
+    expected_duration = data.get('expected_duration', 10)
     preferred_name = data.get('preferred_name', None)
     company_name = data.get('company_name', None)
     position_title = data.get('position_title', None)
@@ -159,7 +175,7 @@ def handle_additional_information(data):
         interview_histories[session_id].technical_question_count = technical_question_count
         interview_histories[session_id].technical_question_difficulty = technical_question_difficulty
         interview_histories[session_id].behavioral_question_count = behavioral_question_count
-        interview_histories[session_id].expectedDuration = expectedDuration
+        interview_histories[session_id].expected_duration = expected_duration
         interview_histories[session_id].preferred_name = preferred_name
         interview_histories[session_id].company_name = company_name
         interview_histories[session_id].position_title = position_title
@@ -172,6 +188,15 @@ def handle_additional_information(data):
 
 @socketio.on('llm_completion')
 def handle_llm_completion(data):
+    """ Handles communication for one llm inference
+    Args:
+        data: data payload received from socket. See list of expected fields in the payload
+        'session_id'(int): a key used to identify a session created in second page. Used as unique key for history
+        'input_content'(string): The content that the user inputed (from either typing or recognized from ASR)
+    Returns:
+        None
+    """
+    
     emit('completion_status', {'status': 'error', 'message': 'Not implemented'}, 400)
 
 if __name__ == '__main__':
