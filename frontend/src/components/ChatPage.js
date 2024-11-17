@@ -8,12 +8,10 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from 'react-router-dom';
 import { io } from "socket.io-client";
 import { getItem, removeItem } from "../localStorage";
-
 const socket = io("http://localhost:7230", {
     transports: ["websocket"],
     reconnectionAttempts: 5,
 });
-
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -29,7 +27,7 @@ const ChatPage = () => {
             recognitionRef.current.continuous = false;
             recognitionRef.current.interimResults = true;
 
-            let finalTranscript = ''; // 用于保存完整转录内容
+            let finalTranscript = '';
 
             recognitionRef.current.onresult = (event) => {
                 let transcript = '';
@@ -44,7 +42,7 @@ const ChatPage = () => {
                 setIsRecording(false);
                 if (finalTranscript.trim()) {
                     handleSendMessage(finalTranscript.trim());
-                    finalTranscript = ''; // 清空转录内容
+                    finalTranscript = '';
                 }
             };
 
@@ -57,6 +55,45 @@ const ChatPage = () => {
         }
     }, []);
 
+    useEffect(() => {
+        socket.on('completion_status', (status) => {
+            if (status.status === 'success' && status.response) {
+                const assistantMessage = { text: status.response, sender: 'assistant' };
+                setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+                playTTS(status.response);
+            } else {
+                console.log("Backend server rejected", status);
+            }
+        });
+
+        return () => {
+            socket.off('completion_status');
+        };
+    }, []);
+    
+
+    const playTTS = (text) => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+
+        utterance.onend = () => {
+            console.log("Speech synthesis completed.");
+            if (!isRecording) {
+                toggleRecognition();
+            }
+        };
+
+        utterance.onerror = (e) => {
+            console.error("Speech synthesis error:", e);
+        };
+    };
+
     const handleSendMessage = (messageText = input) => {
         if (messageText.trim() && sessionID) {
             const userMessage = { text: messageText, sender: 'user' };
@@ -68,20 +105,12 @@ const ChatPage = () => {
             };
 
             socket.emit('llm_completion', payload);
-
-            socket.on('completion_status', (status) => {
-                if (status['success'] === true) {
-                    navigate('/feedback');
-                } else {
-                    console.log("Backend server rejected", status);
-                }
-            });
-
-            setInput(''); // 清空输入框
+            setInput('');
         } else {
             alert('Message cannot be empty or session ID is missing.');
         }
     };
+
 
     const toggleRecognition = () => {
         if (isRecording) {
@@ -101,7 +130,7 @@ const ChatPage = () => {
             if (isRecording) {
                 recognitionRef.current.stop();
             }
-        }, 3000); // 3秒静音自动停止
+        }, 3000);
     };
 
     const handleClearMessages = () => {
@@ -180,6 +209,12 @@ const ChatPage = () => {
                     placeholder="Type your message..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                        }
+                    }}
                     style={{ marginRight: '8px' }}
                     InputProps={{ style: { fontSize: '1rem' } }}
                 />
