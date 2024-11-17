@@ -58,6 +58,7 @@ const JobSelectionPage = () => {
 
     const handleGenerateQuestions = () => {
         const sessionID = Date.now();
+        setItem('session_id', sessionID);
 
         setItem('job_description', job_description);
 
@@ -208,7 +209,7 @@ const JobSelectionPage = () => {
                     </Typography>
                 )}
                 <Typography variant="body1" align="center" style={{ fontSize: '0.875rem' }}>
-                    Optionally upload your resume and cover letter for improved, tailored questions!
+                    Optionally upload your resume for improved, tailored questions! (PDF only)
                 </Typography>
             </Box>
 
