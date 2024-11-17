@@ -2,7 +2,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import json
 
-device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
+device = torch.device('mps' if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
 
 model_name = 'meta-llama/Llama-3.2-1B'
 tokenizer = AutoTokenizer.from_pretrained(model_name)
