@@ -39,15 +39,16 @@ const InfoPage = () => {
             technical_question_difficulty: technicalDifficulty,
         };
 
-        socket.emit('addition_information', payload, (response) => {
-            if (response.success) {
-                console.log('Information submitted successfully:', response);
+        socket.emit('addition_information', payload);
+
+        socket.on('info_received', (status) => {
+            if (status['success'] === true) {
                 navigate('/chat');
             } else {
-                console.error('Failed to submit information:', response);
-                alert(`Error: ${response.message}`);
+                console.log("Backend server rejected", status);
             }
         });
+
     };
 
     return (
