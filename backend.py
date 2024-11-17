@@ -82,14 +82,14 @@ class InterviewInstance:
 Make up some personal stories if the candidate asked such as what you eat for lunch. 
 If you think we are good to move on to the behavioral interview part, add <NEXT> at the beginning of response."""
                 case 1:
-                    return """Come up with a behavioral question that is closely related to the job that the candidate is applying for. You can give the candidate some time
+                    return f"""Come up with a behavioral question with {self.technical_question_difficulty} difficulty that is closely related to the job that the candidate is applying for. You can give the candidate some time
 to think about it. If you think you have enough from the candidate and ready to move on to the technical question, add <NEXT> at the beginning of response."""
                 case 2:
                     return """Come up with a technical question that is closely related to the job that the candidate is applying for. You can give the candidate some time
 to think about it. Do not give away the answer even if the candidate ask for it. Be careful with your hint. 
 If you think you have enough from the candidate and ready to wrap up this interview, add <NEXT> at the beginning of response."""
                 case 3:
-                    return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <STOP> at the beginning of response.
+                    return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <END> at the beginning of response.
                 """
         def pipe_inference(self, verbose=False):
             if RUN_WITH_MODEL:
@@ -97,6 +97,11 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 response = outputs[0]['generated_text'][-1]
             else:
                 response = "TEST RESPONSE FROM LLM"
+            if "<NEXT>" in response:
+                self.interview_procedure.pop(0)
+            if "<END>" in response:
+                print('time to end')
+                emit("end_of_interview", self.messages)
             self.add_message(role="assistant", content=response)
             if verbose:
                 print("Interviewer response:", response)
