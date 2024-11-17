@@ -227,7 +227,7 @@ def handle_additional_information(data):
         interview_histories[session_id].position_title = position_title
     print(f"Session {session_id} - Behavioral: {behavioral_question_count}, Technical: {technical_question_count}")
     print(data)
-    print(interview_histories[session_id])
+    # print(interview_histories[session_id])
     emit('info_received', {'success': True, 'session_id': session_id})
     interview_histories[session_id].prepare_system_prompt()
 
@@ -245,16 +245,16 @@ def handle_llm_completion(data):
     session_id = data['session_id']
     input_content = data['input_content']
     if session_id in interview_histories:
-        emit('completion_status', {'status': 'received', 'message': 'Start inference'}, 200)
-    elif len(input_content==0) or input_content == "":
-        emit('completion_status', {'status': 'failed', 'message': 'Cannot work on empty input'}, 400)
+        emit('completion_status', {'status': 'received', 'message': 'Start inference'})
+    elif len(input_content)==0 or input_content == "":
+        emit('completion_status', {'status': 'failed', 'message': 'Cannot work on empty input'})
         return
     else:
-        emit('completion_status', {'status': 'failed', 'message': 'session_id not found'}, 400)
+        emit('completion_status', {'status': 'failed', 'message': 'session_id not found'})
         return
     interview_histories[session_id].add_message(role="user", content=input_content)
     response = interview_histories[session_id].pipe_inference()
-    emit('completion_status', {'status': 'success', 'message': 'Inference completed', 'response': response}, 200)
+    emit('completion_status', {'status': 'success', 'message': 'Inference completed', 'response': response})
     
 
 if __name__ == '__main__':
