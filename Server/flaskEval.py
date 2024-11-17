@@ -8,6 +8,11 @@ from transformers import pipeline
 import datetime
 from flask_cors import CORS
 
+sys.path.append("../base_model2")
+from script import run_interview_scorer 
+
+
+
 model_id = "meta-llama/Llama-3.2-1B-Instruct"
 pipe = pipeline(
     "text-generation",
@@ -65,6 +70,26 @@ def process_text():
     # # response_text = f"Received text: {text}"
     # # 返回 JSON 响应
     return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
+
+@app.route('/process_text2', methods=['POST'])
+def process_text2():
+     # 获取 JSON 数据
+    data = request.get_json()
+    
+    # 检查请求中是否有 'text' 字段
+    if 'text' not in data:
+        return jsonify({'error': 'Missing "text" field in request'}), 400
+    
+    text = data['text']
+    scores = run_interview_scorer(text,checkpoint_path="../base_model2/checkpoint1.pth")
+    overall_score = scores["Overall Score"]
+    recommendation_score = scores["Recommendation Score"]
+    structured_answers_score = scores["Structured Answers Score"]
+    evaluation = getEval(text, overall_score, recommendation_score, structured_answers_score)
+    return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
+
+     
+     
     
 @app.route("/init_interview", methods=["POST"])
 def start_interview():
@@ -107,4 +132,4 @@ def end_interview():
     else:
         return jsonify({"error": "Session not found."}), 400
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0',port="8888")
