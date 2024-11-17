@@ -1,29 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Box, TextField, IconButton, Typography, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useNavigate } from 'react-router-dom';
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { getItem, setItem, removeItem } from "../localStorage";
+import { useNavigate } from 'react-router-dom';
+import { io } from "socket.io-client";
+import { getItem, removeItem } from "../localStorage";
+
+const socket = io("http://localhost:7230", {
+    transports: ["websocket"],
+    reconnectionAttempts: 5,
+});
 
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
+    const sessionID = getItem('session_id');
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const savedMessages = getItem('messages', []);
-        setMessages(savedMessages);
-    }, []);
-
     const handleSendMessage = () => {
-        if (input.trim()) {
-            const newMessages = [...messages, { text: input, sender: 'user' }];
-            setMessages(newMessages);
-            setItem('messages', newMessages);
-            setInput('');
+        if (input.trim() && sessionID) {
+            const userMessage = { text: input, sender: 'user' };
+            setMessages((prevMessages) => [...prevMessages, userMessage]); // Add user message to chat
+
+            const payload = {
+                session_id: sessionID,
+                input_content: input,
+            };
+
+            // Emit the message to the backend
+            socket.emit('llm_completion', payload);
+
+            socket.on('completion_status', (status) => {
+                if (status['success'] === true) {
+                    navigate('/feedback');
+                } else {
+                    console.log("Backend server rejected", status);
+                }
+            });
+
+            setInput(''); // Clear the input field
+        } else {
+            alert('Message cannot be empty or session ID is missing.');
         }
     };
 
