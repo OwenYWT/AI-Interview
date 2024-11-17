@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
-import { Container, Typography, Box, TextField, Button, IconButton } from '@mui/material';
+import { Container, Typography, Box, TextField, Button, IconButton, MenuItem } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from 'react-router-dom';
+import { getItem, setItem } from "../localStorage";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:7230", {
+    transports: ["websocket"],
+    reconnectionAttempts: 5,
+});
 
 const InfoPage = () => {
     const [problemCountBehavior, setProblemCountBehavior] = useState('');
@@ -11,10 +18,36 @@ const InfoPage = () => {
     const [preferName, setPreferName] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [positionTitle, setPositionTitle] = useState('');
+    const [technicalDifficulty, setTechnicalDifficulty] = useState('medium'); // Default value
     const navigate = useNavigate();
 
     const handleSubmit = () => {
-        navigate('/chat');
+        const sessionID = getItem('session_id');
+        if (!sessionID) {
+            alert('Session ID not found! Please go back and start again.');
+            return;
+        }
+
+        const payload = {
+            session_id: sessionID,
+            behavioral_question_count: parseInt(problemCountBehavior, 10) || 1,
+            technical_question_count: parseInt(problemCountTechnical, 10) || 1,
+            expected_duration: parseInt(expectedDuration, 10) || 10,
+            preferred_name: preferName,
+            company_name: companyName,
+            position_title: positionTitle,
+            technical_question_difficulty: technicalDifficulty,
+        };
+
+        socket.emit('addition_information', payload, (response) => {
+            if (response.success) {
+                console.log('Information submitted successfully:', response);
+                navigate('/chat');
+            } else {
+                console.error('Failed to submit information:', response);
+                alert(`Error: ${response.message}`);
+            }
+        });
     };
 
     return (
@@ -36,22 +69,42 @@ const InfoPage = () => {
                     label="Problem Count - Behavior"
                     variant="outlined"
                     fullWidth
+                    type="number"
                     value={problemCountBehavior}
-                    onChange={(e) => setProblemCountBehavior(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                            setProblemCountBehavior(value);
+                        }
+                    }}
                 />
+
                 <TextField
                     label="Problem Count - Technical"
                     variant="outlined"
                     fullWidth
+                    type="number"
                     value={problemCountTechnical}
-                    onChange={(e) => setProblemCountTechnical(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                            setProblemCountTechnical(value);
+                        }
+                    }}
                 />
+
                 <TextField
-                    label="Expected Duration"
+                    label="Expected Duration (Minutes)"
                     variant="outlined"
                     fullWidth
+                    type="number"
                     value={expectedDuration}
-                    onChange={(e) => setExpectedDuration(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                            setExpectedDuration(value);
+                        }
+                    }}
                 />
                 <TextField
                     label="Preferred Name"
@@ -74,6 +127,19 @@ const InfoPage = () => {
                     value={positionTitle}
                     onChange={(e) => setPositionTitle(e.target.value)}
                 />
+                <TextField
+                    select
+                    label="Technical Question Difficulty"
+                    variant="outlined"
+                    fullWidth
+                    value={technicalDifficulty}
+                    sx={{ width: '200px' }}
+                    onChange={(e) => setTechnicalDifficulty(e.target.value)}
+                >
+                    <MenuItem value="easy" sx={{ textAlign: 'left' }}>Easy</MenuItem>
+                    <MenuItem value="medium" sx={{ textAlign: 'left' }}>Medium</MenuItem>
+                    <MenuItem value="hard" sx={{ textAlign: 'left' }}>Hard</MenuItem>
+                </TextField>
             </Box>
 
             {/* Submit Button */}
