@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Container, Box, TextField, IconButton, Typography, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from 'react-router-dom';
 import { io } from "socket.io-client";
 import { getItem, removeItem } from "../localStorage";
@@ -17,20 +17,56 @@ const socket = io("http://localhost:7230", {
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
-    const sessionID = getItem('session_id');
+    const [isRecording, setIsRecording] = useState(false);
     const navigate = useNavigate();
+    const recognitionRef = useRef(null);
+    const sessionID = getItem('session_id');
+    const silenceTimeoutRef = useRef(null);
 
-    const handleSendMessage = () => {
-        if (input.trim() && sessionID) {
-            const userMessage = { text: input, sender: 'user' };
-            setMessages((prevMessages) => [...prevMessages, userMessage]); // Add user message to chat
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window && !recognitionRef.current) {
+            recognitionRef.current = new window.webkitSpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.interimResults = true;
+
+            let finalTranscript = ''; // 用于保存完整转录内容
+
+            recognitionRef.current.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    transcript += event.results[i][0].transcript;
+                }
+                finalTranscript = transcript.trim();
+                setInput(finalTranscript);
+            };
+
+            recognitionRef.current.onend = () => {
+                setIsRecording(false);
+                if (finalTranscript.trim()) {
+                    handleSendMessage(finalTranscript.trim());
+                    finalTranscript = ''; // 清空转录内容
+                }
+            };
+
+            recognitionRef.current.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+                setIsRecording(false);
+            };
+        } else if (!('webkitSpeechRecognition' in window)) {
+            alert("Your browser does not support speech recognition.");
+        }
+    }, []);
+
+    const handleSendMessage = (messageText = input) => {
+        if (messageText.trim() && sessionID) {
+            const userMessage = { text: messageText, sender: 'user' };
+            setMessages((prevMessages) => [...prevMessages, userMessage]);
 
             const payload = {
                 session_id: sessionID,
-                input_content: input,
+                input_content: messageText,
             };
 
-            // Emit the message to the backend
             socket.emit('llm_completion', payload);
 
             socket.on('completion_status', (status) => {
@@ -41,10 +77,31 @@ const ChatPage = () => {
                 }
             });
 
-            setInput(''); // Clear the input field
+            setInput(''); // 清空输入框
         } else {
             alert('Message cannot be empty or session ID is missing.');
         }
+    };
+
+    const toggleRecognition = () => {
+        if (isRecording) {
+            recognitionRef.current.stop();
+            setIsRecording(false);
+            clearTimeout(silenceTimeoutRef.current);
+        } else {
+            recognitionRef.current.start();
+            setIsRecording(true);
+            startSilenceDetection();
+        }
+    };
+
+    const startSilenceDetection = () => {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = setTimeout(() => {
+            if (isRecording) {
+                recognitionRef.current.stop();
+            }
+        }, 3000); // 3秒静音自动停止
     };
 
     const handleClearMessages = () => {
@@ -123,13 +180,12 @@ const ChatPage = () => {
                     placeholder="Type your message..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     style={{ marginRight: '8px' }}
                     InputProps={{ style: { fontSize: '1rem' } }}
                 />
 
-                <IconButton color="primary" onClick={() => alert('Microphone activated')}>
-                    <MicIcon fontSize="large" />
+                <IconButton color="primary" onClick={toggleRecognition}>
+                    <MicIcon fontSize="large" style={{ color: isRecording ? 'red' : 'inherit' }} />
                 </IconButton>
 
                 <IconButton color="primary" onClick={handleSendMessage}>
