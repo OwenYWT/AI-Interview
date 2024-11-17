@@ -5,34 +5,34 @@ import torch.nn.functional as F
 from model import HierarchicalInterviewScorer
 from model_utils import tokenize_dialogue, predict_scores, format_scores
 
-def load_trained_model(checkpoint_path, device="cpu"):
-    model = HierarchicalInterviewScorer(hidden_size=768, num_dialogue_layers=2, dropout=0.3)
-    state_dict = torch.load(checkpoint_path, map_location=device)
-    model.load_state_dict(state_dict, strict=False)
-    model = model.to(device)
-    return model
+# def load_trained_model(checkpoint_path, device="cpu"):
+#     model = HierarchicalInterviewScorer(hidden_size=768, num_dialogue_layers=2, dropout=0.3)
+#     state_dict = torch.load(checkpoint_path, map_location=device)
+#     model.load_state_dict(state_dict, strict=False)
+#     model = model.to(device)
+#     return model
 
-if __name__ == "__main__":
-    checkpoint_path = "checkpoint1.pth" 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = load_trained_model(checkpoint_path, device=device)
+# if __name__ == "__main__":
+#     checkpoint_path = "checkpoint1.pth" 
+#     device = "cuda" if torch.cuda.is_available() else "cpu"
+#     model = load_trained_model(checkpoint_path, device=device)
 
-    conversation = input("Enter the entire conversation dialogue:\n")
+#     conversation = input("Enter the entire conversation dialogue:\n")
 
-    dialogue_turns = [turn.strip() for turn in conversation.split('.') if turn.strip()]
-    dialogue_turns = ' '.join(dialogue_turns)
-    dialogue_dict = {"dialogue": dialogue_turns}
-    tokenized_input = tokenize_dialogue(dialogue_dict["dialogue"], max_turns=20, max_length=512)
+#     dialogue_turns = [turn.strip() for turn in conversation.split('.') if turn.strip()]
+#     dialogue_turns = ' '.join(dialogue_turns)
+#     dialogue_dict = {"dialogue": dialogue_turns}
+#     tokenized_input = tokenize_dialogue(dialogue_dict["dialogue"], max_turns=20, max_length=512)
 
-    if not dialogue_dict["dialogue"]:
-        print("No dialogue entered. Your score is 0")
-    else:
-        predicted_scores = predict_scores(model, tokenized_input, device=device)
+#     if not dialogue_dict["dialogue"]:
+#         print("No dialogue entered. Your score is 0")
+#     else:
+#         predicted_scores = predict_scores(model, tokenized_input, device=device)
         
-        formatted_scores = format_scores(predicted_scores)
-        print("\nPredicted Scores:")
-        for label, score in formatted_scores.items():
-            print(f"{label}: {score:.2f}")
+#         formatted_scores = format_scores(predicted_scores)
+#         print("\nPredicted Scores:")
+#         for label, score in formatted_scores.items():
+#             print(f"{label}: {score:.2f}")
 
     # val_data_path = "data/val_data.json"
     # with open(val_data_path, "r") as f:
@@ -66,3 +66,41 @@ if __name__ == "__main__":
     # print("Predicted Scores:")
     # for label, score in formatted_scores.items():
     #     print(f"{label}: {score:.2f}")
+
+
+
+def load_trained_model(checkpoint_path, device="cpu"):
+
+    model = HierarchicalInterviewScorer(hidden_size=768, num_dialogue_layers=2, dropout=0.3)
+    state_dict = torch.load(checkpoint_path, map_location=device)
+    model.load_state_dict(state_dict, strict=False)
+    model = model.to(device)
+    return model
+
+def process_dialogue(conversation, max_turns=20, max_length=512):
+
+    dialogue_turns = [turn.strip() for turn in conversation.split('.') if turn.strip()]
+    dialogue_turns = ' '.join(dialogue_turns)
+    dialogue_dict = {"dialogue": dialogue_turns}
+    if not dialogue_dict["dialogue"]:
+        return None, "No dialogue entered. Your score is 0"
+
+    tokenized_input = tokenize_dialogue(dialogue_dict["dialogue"], max_turns=max_turns, max_length=max_length)
+    return tokenized_input, None
+
+def get_predicted_scores(model, tokenized_input, device="cpu"):
+
+    predicted_scores = predict_scores(model, tokenized_input, device=device)
+    formatted_scores = format_scores(predicted_scores)
+    return formatted_scores
+
+def run_interview_scorer(conversation, checkpoint_path="checkpoint1.pth", device=None):
+
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = load_trained_model(checkpoint_path, device=device)
+    tokenized_input, error_message = process_dialogue(conversation)
+    if error_message:
+        return {"Error": error_message}
+    scores = get_predicted_scores(model, tokenized_input, device=device)
+    return scores
