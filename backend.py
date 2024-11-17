@@ -8,7 +8,7 @@ import datetime, time
 import pypdf
 
 # If you do not want to load model for testing, set this variable to False
-RUN_WITH_MODEL = True
+RUN_WITH_MODEL = False
 
 RESUME_FOLDER = 'resumes'
 os.makedirs(RESUME_FOLDER, exist_ok=True)
@@ -19,7 +19,7 @@ socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")  # Ens
 
 interview_histories = {} #format {session_id: InterviewInstance}
 pipe = None
-if not RUN_WITH_MODEL:
+if RUN_WITH_MODEL:
     model_id = "meta-llama/Llama-3.2-1B-Instruct"
     pipe = pipeline(
         "text-generation",
@@ -66,7 +66,8 @@ class InterviewInstance:
                 if self.resume_file_path is not None and self.resume_file_path != "":
                     resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
                     if RUN_WITH_MODEL:
-                        self.resume_summary = pipe({"role": "system", "content": resume_summary_prompt}, max_new_token=256)
+                        self.resume_summary = pipe([{"role": "system", "content": resume_summary_prompt}], max_new_tokens=256)
+                        print(self.resume_summary)
         def prepare_system_prompt(self):
                 self.system_prompt = system_prompt_helper(interviewer_name="Burdell", candidate_name=self.preferred_name, company=self.company_name, 
                                                           position_name=self.position_name, qualifications=self.job_description, 
@@ -132,7 +133,8 @@ def resume_summarization_prompt_helper(resume_file_path):
                         pdf_reader = pypdf.PdfReader(resume_file_path)
                         text = ""
                         for curr_page in pdf_reader.pages:
-                                text+=curr_page.extract_text()
+                            text+=curr_page.extract_text()
+                            break #take first page for now 
                 elif resume_file_path.split(".")[-1] == 'txt':
                         with open(resume_file_path, 'r') as file:
                                 text = file.read()
