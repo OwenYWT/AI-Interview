@@ -169,7 +169,8 @@ def handle_connect(data):
         with open(resume_file_path, 'wb') as f:
             f.write(file_binary_data)
 
-    print(f"Client connected with session id {session_id} and resume saved as {resume_filename if resume_filename is not None else "None"}")
+    print(f"Client connected with session id {session_id} and resume saved as {resume_filename if resume_filename is not None else 'None'}")
+    print(f"The current job description is {job_description}")
 
     if session_id not in interview_histories:
         interview_histories[session_id]=InterviewInstance(session_id=session_id, authorization_token=authorization_token, job_description=job_description)
