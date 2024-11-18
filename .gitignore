@@ -7,3 +7,5 @@ base_model/models/*
 /resumes
 base_model2/*.pth
 Eval/*.yaml
+Models/*
+Analysis/*.png
