@@ -45,8 +45,9 @@ if RUN_WITH_MODEL:
     
     # pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
     # llm = Llama.from_pretrained(
-    #     repo_id="bartowski/Llama-3.2-1B-Instruct-GGUF",
-    #     filename="Llama-3.2-1B-Instruct-Q4_0_4_4.gguf",
+    #     repo_id="QuantFactory/Llama-3.2-1B-Instruct-GGUF",
+    #     filename="Llama-3.2-1B-Instruct.Q6_K.gguf",
+    #     _ctx=2048
     # )
     
     # model_id = "QuantFactory/Llama-3.2-1B-Instruct-GGUF"
@@ -55,6 +56,7 @@ if RUN_WITH_MODEL:
     pipe = pipeline(
         "text-generation",
         model=model_id,
+        # gguf_file=gguf_file,    
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
@@ -92,16 +94,18 @@ class InterviewInstance:
                 if (role == 'user'):
                     self.converstation_counter += 1
         def get_message(self):
-            print(self.messages)
+            print("get message self.messages", self.messages)
             temp_message = self.messages.copy()
             temp_message.append({"role": "system", "content": self.prepare_realtime_guidance_prompt()})
             return temp_message
         def generate_resume_summary(self):
-                if self.resume_file_path is not None and self.resume_file_path != "":
-                    resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
-                    if RUN_WITH_MODEL:
-                        self.resume_summary = pipe([{"role": "system", "content": resume_summary_prompt}], max_new_tokens=256)
-                        print(self.resume_summary)
+            return
+            if self.resume_file_path is not None and self.resume_file_path != "":
+                resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
+                if RUN_WITH_MODEL:
+                    # self.resume_summary = pipe([{"role": "system", "content": resume_summary_prompt}], max_new_tokens=256)
+                    self.resume_summary = llm.create_chat_completion(messages=[{"role": "system", "content": resume_summary_prompt}], response_format={"type": "json_object",},)
+                    print(self.resume_summary)
         def prepare_system_prompt(self):
                 self.system_prompt = system_prompt_helper(interviewer_name="Burdell", candidate_name=self.preferred_name, company=self.company_name, 
                                                           position_name=self.position_name, qualifications=self.job_description, 
@@ -110,32 +114,53 @@ class InterviewInstance:
                 self.interview_procedure.extend([1 for i in range(self.behavioral_question_count)])
                 self.interview_procedure.extend([2 for i in range(self.technical_question_count)])
                 self.interview_procedure.append(3)
+                self.add_message("system", self.system_prompt)
         def prepare_realtime_guidance_prompt(self):
-            match self.interview_procedure[0]:
-                case 0:
-                    return """It's just the start of the interview so be chill. Start with kind greeting. Try to get to know more about each other. 
-Make up some personal stories if the candidate asked such as what you eat for lunch. 
-If you think we are good to move on to the behavioral interview part, add <NEXT> at the beginning of response."""
-                case 1:
-                    return f"""Come up with a behavioral question with {self.technical_question_difficulty} difficulty that is closely related to the job that the candidate is applying for. You can give the candidate some time
+            print("interview procedure", self.interview_procedure)
+            if self.interview_procedure[0] == 0:
+                #Make up some personal stories if the candidate asked such as what you eat for lunch. 
+                return """It's just the start of the interview so be chill. Start with kind greeting. Try to get to know more about each other. 
+If you think we are good to move on to the behavioral interview part, add <NEXT> at the beginning of response. Give short response."""
+            elif self.interview_procedure[0] == 1:
+                return f"""Come up with a behavioral question with {self.technical_question_difficulty} difficulty that is closely related to the job that the candidate is applying for. You can give the candidate some time
 to think about it. If you think you have enough from the candidate and ready to move on to the technical question, add <NEXT> at the beginning of response."""
-                case 2:
-                    return """Come up with a technical question that is closely related to the job that the candidate is applying for. You can give the candidate some time
+            elif self.interview_procedure[0] == 2:
+                return """Come up with a technical question that is closely related to the job that the candidate is applying for. You can give the candidate some time
 to think about it. Do not give away the answer even if the candidate ask for it. Be careful with your hint. 
 If you think you have enough from the candidate and ready to wrap up this interview, add <NEXT> at the beginning of response."""
-                case 3:
-                    return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <END> at the beginning of response.
+            elif self.interview_procedure[0] == 3:
+                return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <END> at the beginning of response.
                 """
+            
+#             match self.interview_procedure[0]:
+#                 case 0:
+#                     return """It's just the start of the interview so be chill. Start with kind greeting. Try to get to know more about each other. 
+# Make up some personal stories if the candidate asked such as what you eat for lunch. 
+# If you think we are good to move on to the behavioral interview part, add <NEXT> at the beginning of response."""
+#                 case 1:
+#                     return f"""Come up with a behavioral question with {self.technical_question_difficulty} difficulty that is closely related to the job that the candidate is applying for. You can give the candidate some time
+# to think about it. If you think you have enough from the candidate and ready to move on to the technical question, add <NEXT> at the beginning of response."""
+#                 case 2:
+#                     return """Come up with a technical question that is closely related to the job that the candidate is applying for. You can give the candidate some time
+# to think about it. Do not give away the answer even if the candidate ask for it. Be careful with your hint. 
+# If you think you have enough from the candidate and ready to wrap up this interview, add <NEXT> at the beginning of response."""
+#                 case 3:
+#                     return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <END> at the beginning of response.
+#                 """
         def pipe_inference(self, verbose=True):
             if RUN_WITH_MODEL:
-                print(self.get_message())
+                print("self get message", self.get_message())
                 outputs = pipe(self.get_message(),max_new_tokens=256)
-                response = outputs[0]['generated_text'][-1]
+                # print("pipe inference", llm )
+                # outputs = llm.create_chat_completion(messages=self.get_message(),response_format={"type": "json_object"})
+                # response = outputs['choices'][0]['message']['content']
+                response = outputs[0]['generated_text'][-1]['content']
             else:
                 response = "TEST RESPONSE FROM LLM"
-            if "<NEXT>" in response:
+            if "NEXT" in response:
                 self.interview_procedure.pop(0)
-            if "<END>" in response:
+                response = response.replace("NEXT", "")
+            if "END" in response:
                 print('time to end')
                 self.end_interview()
                 # emit("end_of_interview", {"chat_history": self.messages})
@@ -261,7 +286,7 @@ def handle_additional_information(data):
         interview_histories[session_id].company_name = company_name
         interview_histories[session_id].position_title = position_title
     print(f"Session {session_id} - Behavioral: {behavioral_question_count}, Technical: {technical_question_count}")
-    print(data)
+    print("data in handle", data)
     # print(interview_histories[session_id])
     emit('info_received', {'success': True, 'session_id': session_id})
     interview_histories[session_id].prepare_system_prompt()
