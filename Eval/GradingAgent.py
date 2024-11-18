@@ -1,6 +1,9 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 import json
+from openai import OpenAI
+import yaml
+import os
 
 device = torch.device('mps' if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,11 +26,6 @@ def getEval(transcript_text, overall_score, recommendation_score, structured_ans
     f"Evaluation:\n"
     )
 
-    
-
-
-
-
     # 确保模型在设备上
     model.to(device)
     inputs = tokenizer(prompt_text, return_tensors="pt").to(device)
@@ -49,6 +47,31 @@ def getEval(transcript_text, overall_score, recommendation_score, structured_ans
     evaluation = tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
 
     return evaluation
+
+def getGptEval(transcript_text, overall_score, recommendation_score, structured_answers_score): 
+    prompt_text = (
+    f"Please analyze the following interview transcript and provide a detailed evaluation in 100 words. "
+    f"Focus on strengths, weaknesses, and areas for improvement of the interviewee. Do not repeat the transcript verbatim.\n\n"
+    f"Overall Score: {overall_score}/7, Recommendation Score: {recommendation_score}/7, "
+    f"Structured Answers Score: {structured_answers_score}/7.\n\n"
+    f"Transcript:\n{transcript_text}\n\n"
+    f"Evaluation:\n"
+    )
+
+    with open(os.path.dirname(os.path.abspath(__file__))+"/openai_config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    client = OpenAI(
+        organization=config['train']['organizationID'],
+        project=config['train']['projectID'],
+        api_key=config['train']['open_api_key'],
+    )
+    response = client.chat.completions.create(
+      messages=[{"role": "user", "content": prompt_text}],
+      model=config['train']['model']
+    )
+    return json.loads(response.json())['choices'][0]['message']['content']
+
+
 
 if __name__ == "__main__":
     with open('../Labels/combined_data.json', 'r') as file:

@@ -6,3 +6,4 @@ base_model/models/*
 /frontend/node_modules/*
 /resumes
 base_model2/*.pth
+Eval/*.yaml

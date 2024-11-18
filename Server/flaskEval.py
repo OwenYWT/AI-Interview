@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import sys
 sys.path.append("../Eval") 
 from GradingOnly import load_and_predict
-from GradingAgent import getEval
+from GradingAgent import getEval,getGptEval
 import torch
 from transformers import pipeline
 import datetime
@@ -88,6 +88,24 @@ def process_text2():
     evaluation = getEval(text, overall_score, recommendation_score, structured_answers_score)
     return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
 
+@app.route('/process_text3', methods=['POST'])
+def process_text3():
+     # 获取 JSON 数据
+    data = request.get_json()
+    
+    # 检查请求中是否有 'text' 字段
+    if 'text' not in data:
+        return jsonify({'error': 'Missing "text" field in request'}), 400
+    
+    text = data['text']
+    scores = run_interview_scorer(text,checkpoint_path="../base_model2/checkpoint1.pth")
+    overall_score = round(scores["Overall Score"],3)
+    recommendation_score = round(scores["Recommendation Score"],3)
+    structured_answers_score = round(scores["Structured Answers Score"],3)
+    evaluation = getGptEval(text, overall_score, recommendation_score, structured_answers_score)
+    return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
+
+     
      
      
     
