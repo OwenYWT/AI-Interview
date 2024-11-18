@@ -8,6 +8,7 @@ import datetime, time
 import pypdf
 import transformers
 from llama_cpp import Llama
+import ollama
 
 # If you do not want to load model for testing, set this variable to False
 RUN_WITH_MODEL = True
@@ -52,14 +53,15 @@ if RUN_WITH_MODEL:
     
     # model_id = "QuantFactory/Llama-3.2-1B-Instruct-GGUF"
     # gguf_file = "Llama-3.2-1B-Instruct.Q6_K.gguf"
-    model_id = "meta-llama/Llama-3.2-1B-Instruct"
-    pipe = pipeline(
-        "text-generation",
-        model=model_id,
-        # gguf_file=gguf_file,    
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
+    # model_id = "meta-llama/Llama-3.2-1B-Instruct"
+    # pipe = pipeline(
+    #     "text-generation",
+    #     model=model_id,
+    #     # gguf_file=gguf_file,    
+    #     torch_dtype=torch.bfloat16,
+    #     device_map="auto",
+    # )
+    pass
 
 class InterviewInstance:
         def __init__(self, session_id, system_prompt=None, authorization_token=None, job_description=None) -> None:
@@ -149,12 +151,17 @@ If you think you have enough from the candidate and ready to wrap up this interv
 #                 """
         def pipe_inference(self, verbose=True):
             if RUN_WITH_MODEL:
-                print("self get message", self.get_message())
-                outputs = pipe(self.get_message(),max_new_tokens=256)
+                # print("self get message", self.get_message())
+                ### This is using transformers pipeline
+                # outputs = pipe(self.get_message(),max_new_tokens=256)
+                # response = outputs[0]['generated_text'][-1]['content']
+                ### This is using llama-cpp-python
                 # print("pipe inference", llm )
                 # outputs = llm.create_chat_completion(messages=self.get_message(),response_format={"type": "json_object"})
                 # response = outputs['choices'][0]['message']['content']
-                response = outputs[0]['generated_text'][-1]['content']
+                ### This is using ollama 
+                outputs = ollama.chat(model='llama3.2:1b', messages=self.get_message())
+                response = outputs['message']['content'].replace("<|start_header_id|>assistant<|end_header_id|>", "")
             else:
                 response = "TEST RESPONSE FROM LLM"
             if "NEXT" in response:
