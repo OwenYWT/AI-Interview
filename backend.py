@@ -254,6 +254,7 @@ def handle_llm_completion(data):
         return
     interview_histories[session_id].add_message(role="user", content=input_content)
     response = interview_histories[session_id].pipe_inference()
+    print(f"Session {session_id} - content: {input_content}")
     emit('completion_status', {'status': 'success', 'message': 'Inference completed', 'response': response})
     
 

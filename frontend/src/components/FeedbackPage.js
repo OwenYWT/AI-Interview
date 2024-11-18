@@ -9,7 +9,7 @@ const FeedbackPage = () => {
     const location = useLocation();
 
     const [feedback, setFeedback] = useState({
-        evaluation: { overall: "Overall evaluation is not available." },
+        evaluation: "Overall evaluation is not available.",
         overall_score: "Overall score is not available.",
         recommendation_score: "Recommendation score is not available.",
         structured_answers_score: "Structured answers score is not available.",
@@ -39,29 +39,29 @@ const FeedbackPage = () => {
 
             <Box mt={4} textAlign="left">
                 {/* Evaluation Sections */}
-                <Typography variant="h6" gutterBottom>
-                    Overall Evaluation:
+                <Typography variant="h5" gutterBottom>
+                    Evaluation:
                 </Typography>
-                <Typography variant="body1" style={{ marginBottom: '20px' }}>
-                    {feedback.evaluation?.overall}
+                <Typography variant="body1" style={{ marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
+                    {feedback.evaluation}
                 </Typography>
 
                 {/* Score Sections */}
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h5" gutterBottom>
                     Overall Score:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
                     {feedback.overall_score}
                 </Typography>
 
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h5" gutterBottom>
                     Recommendation Score:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
                     {feedback.recommendation_score}
                 </Typography>
 
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h5" gutterBottom>
                     Structured Answers Score:
                 </Typography>
                 <Typography variant="body1" style={{ marginBottom: '20px' }}>
