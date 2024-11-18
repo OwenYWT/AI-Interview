@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import sys
 sys.path.append("../Eval") 
 from GradingOnly import load_and_predict
-from GradingAgent import getEval
+from GradingAgent import getEval,getGptEval
 import torch
 from transformers import pipeline
 import datetime
@@ -61,9 +61,9 @@ def process_text():
     
     text = data['text']
 
-    overall_score = load_and_predict(text, "../Models/y_overall_model.joblib")
-    recommendation_score = load_and_predict(text, "../Models/y_recommend_hiring_model.joblib")
-    structured_answers_score = load_and_predict(text, "../Models/y_structured_answers_model.joblib")
+    overall_score = round(load_and_predict(text, "../Models/y_overall_model.joblib"),3)
+    recommendation_score = round(load_and_predict(text, "../Models/y_recommend_hiring_model.joblib"),3)
+    structured_answers_score = round(load_and_predict(text, "../Models/y_structured_answers_model.joblib"),3)
 
     evaluation = getEval(text, overall_score, recommendation_score, structured_answers_score)
     # # # 在此处进行文字处理逻辑
@@ -82,12 +82,30 @@ def process_text2():
     
     text = data['text']
     scores = run_interview_scorer(text,checkpoint_path="../base_model2/checkpoint1.pth")
-    overall_score = scores["Overall Score"]
-    recommendation_score = scores["Recommendation Score"]
-    structured_answers_score = scores["Structured Answers Score"]
+    overall_score = round(scores["Overall Score"],3)
+    recommendation_score = round(scores["Recommendation Score"],3)
+    structured_answers_score = round(scores["Structured Answers Score"],3)
     evaluation = getEval(text, overall_score, recommendation_score, structured_answers_score)
     return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
 
+@app.route('/process_text3', methods=['POST'])
+def process_text3():
+     # 获取 JSON 数据
+    data = request.get_json()
+    
+    # 检查请求中是否有 'text' 字段
+    if 'text' not in data:
+        return jsonify({'error': 'Missing "text" field in request'}), 400
+    
+    text = data['text']
+    scores = run_interview_scorer(text,checkpoint_path="../base_model2/checkpoint1.pth")
+    overall_score = round(scores["Overall Score"],3)
+    recommendation_score = round(scores["Recommendation Score"],3)
+    structured_answers_score = round(scores["Structured Answers Score"],3)
+    evaluation = getGptEval(text, overall_score, recommendation_score, structured_answers_score)
+    return jsonify({'evaluation': evaluation, 'overall_score':overall_score, 'recommendation_score':recommendation_score, 'structured_answers_score':structured_answers_score})
+
+     
      
      
     

@@ -1,33 +1,107 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Container, Box, TextField, IconButton, Typography, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from 'react-router-dom';
 import { io } from "socket.io-client";
 import { getItem, removeItem } from "../localStorage";
-
 const socket = io("http://localhost:7230", {
     transports: ["websocket"],
     reconnectionAttempts: 5,
 });
-
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
-    const sessionID = getItem('session_id');
+    const [isRecording, setIsRecording] = useState(false);
     const navigate = useNavigate();
+    const recognitionRef = useRef(null);
+    const sessionID = getItem('session_id');
+    const silenceTimeoutRef = useRef(null);
 
-    const handleSendMessage = () => {
-        if (input.trim() && sessionID) {
-            const userMessage = { sender: 'interviewee', text: input };
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window && !recognitionRef.current) {
+            recognitionRef.current = new window.webkitSpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.interimResults = true;
+
+            let finalTranscript = '';
+
+            recognitionRef.current.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    transcript += event.results[i][0].transcript;
+                }
+                finalTranscript = transcript.trim();
+                setInput(finalTranscript);
+            };
+
+            recognitionRef.current.onend = () => {
+                setIsRecording(false);
+                if (finalTranscript.trim()) {
+                    handleSendMessage(finalTranscript.trim());
+                    finalTranscript = '';
+                }
+            };
+
+            recognitionRef.current.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+                setIsRecording(false);
+            };
+        } else if (!('webkitSpeechRecognition' in window)) {
+            alert("Your browser does not support speech recognition.");
+        }
+    }, []);
+
+    useEffect(() => {
+        socket.on('completion_status', (status) => {
+            if (status.status === 'success' && status.response) {
+                const assistantMessage = { text: status.response, sender: 'assistant' };
+                setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+                playTTS(status.response);
+            } else {
+                console.log("Backend server rejected", status);
+            }
+        });
+
+        return () => {
+            socket.off('completion_status');
+        };
+    }, []);
+    
+
+    const playTTS = (text) => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        window.speechSynthesis.speak(utterance);
+
+        utterance.onend = () => {
+            console.log("Speech synthesis completed.");
+            if (!isRecording) {
+                toggleRecognition();
+            }
+        };
+
+        utterance.onerror = (e) => {
+            console.error("Speech synthesis error:", e);
+        };
+    };
+
+    const handleSendMessage = (messageText = input) => {
+        if (messageText.trim() && sessionID) {
+            const userMessage = { text: messageText, sender: 'user' };
             setMessages((prevMessages) => [...prevMessages, userMessage]);
 
             const payload = {
                 session_id: sessionID,
-                input_content: input,
+                input_content: messageText,
             };
 
             socket.emit('llm_completion', payload);
@@ -37,14 +111,40 @@ const ChatPage = () => {
                     const interviewerResponse = { sender: 'interviewer', text: status.response };
                     setMessages((prevMessages) => [...prevMessages, interviewerResponse]);
                 } else {
-                    console.error("Backend server rejected", status);
+                    console.log("Backend server received message", status);
                 }
+            });
+            socket.on('end_of_interview', (status) => {
+                console.log("Backend server ended interview", status);
+                navigate('/feedback');
             });
 
             setInput('');
         } else {
             alert('Message cannot be empty or session ID is missing.');
         }
+    };
+
+
+    const toggleRecognition = () => {
+        if (isRecording) {
+            recognitionRef.current.stop();
+            setIsRecording(false);
+            clearTimeout(silenceTimeoutRef.current);
+        } else {
+            recognitionRef.current.start();
+            setIsRecording(true);
+            startSilenceDetection();
+        }
+    };
+
+    const startSilenceDetection = () => {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = setTimeout(() => {
+            if (isRecording) {
+                recognitionRef.current.stop();
+            }
+        }, 3000);
     };
 
     const handleClearMessages = () => {
@@ -162,13 +262,18 @@ const ChatPage = () => {
                     placeholder="Type your message..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                        }
+                    }}
                     style={{ marginRight: '8px' }}
                     InputProps={{ style: { fontSize: '1rem' } }}
                 />
 
-                <IconButton color="primary" onClick={() => alert('Microphone activated')}>
-                    <MicIcon fontSize="large" />
+                <IconButton color="primary" onClick={toggleRecognition}>
+                    <MicIcon fontSize="large" style={{ color: isRecording ? 'red' : 'inherit' }} />
                 </IconButton>
 
                 <IconButton color="primary" onClick={handleSendMessage}>
