@@ -153,7 +153,7 @@ const ChatPage = () => {
     };
 
     const handleGetFeedback = () => {
-
+        socket.emit("stop_interview", {"session_id": sessionID})
         const data = { "text": "Interviewer: Can you tell me about yourself?\n" +
                 "Interviewee: Uh... yeah, so, um, I'm, uh, John Doe. I, uh, studied... computer science. Yeah, and, um, I've done some, uh, coding... here and there.\n" +
                 "\n" +
