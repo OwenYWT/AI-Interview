@@ -37,8 +37,12 @@ const ChatPage = () => {
                 if (status['success'] === true) {
                     navigate('/feedback');
                 } else {
-                    console.log("Backend server rejected", status);
+                    console.log("Backend server received message", status);
                 }
+            });
+            socket.on('end_of_interview', (status) => {
+                console.log("Backend server ended interview", status);
+                navigate('/feedback');
             });
 
             setInput(''); // Clear the input field
@@ -53,6 +57,7 @@ const ChatPage = () => {
     };
 
     const handleGetFeedback = () => {
+        socket.emit("stop_interview", {"session_id": sessionID})
         const evaluation = {
             overall: 'Overall, a solid performance with room for growth in specific areas.',
         };

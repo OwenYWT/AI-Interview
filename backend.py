@@ -1,14 +1,16 @@
 from flask import Flask, jsonify
 from flask_socketio import SocketIO, emit
-from transformers import pipeline
+from transformers import pipeline, AutoModel, GPT2Config, pipeline, AutoTokenizer, AutoModelForCausalLM
 import torch
 import base64
 import os
 import datetime, time
 import pypdf
+import transformers
+from llama_cpp import Llama
 
 # If you do not want to load model for testing, set this variable to False
-RUN_WITH_MODEL = False
+RUN_WITH_MODEL = True
 
 RESUME_FOLDER = 'resumes'
 os.makedirs(RESUME_FOLDER, exist_ok=True)
@@ -19,7 +21,34 @@ socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*")  # Ens
 
 interview_histories = {} #format {session_id: InterviewInstance}
 pipe = None
+llm = None
 if RUN_WITH_MODEL:
+    # config = transformers.LlamaConfig(
+    #     vocab_size=32000,
+    #     n_positions=1024, 
+    #     n_ctx=1024,     
+    #     n_embd=768,       
+    #     n_layer=12,       
+    #     n_head=12,         
+    #     model_type="llama" 
+    # )
+    
+    # model_id = AutoModel.from_pretrained("QuantFactory/Llama-3.2-3B-GGUF")
+    
+    # tokenizer = AutoTokenizer.from_pretrained("QuantFactory/Llama-3.2-1B-Instruct-GGUF")
+    # model = AutoModelForCausalLM.from_pretrained(
+    #     "QuantFactory/Llama-3.2-1B-Instruct-GGUF",
+    #     config=config,
+    #     torch_dtype=torch.bfloat16,
+    #     device_map="auto"
+    # )
+    
+    # pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
+    # llm = Llama.from_pretrained(
+    #     repo_id="bartowski/Llama-3.2-1B-Instruct-GGUF",
+    #     filename="Llama-3.2-1B-Instruct-Q4_0_4_4.gguf",
+    # )
+    
     model_id = "QuantFactory/Llama-3.2-1B-Instruct-GGUF"
     gguf_file = "Llama-3.2-1B-Instruct.Q6_K.gguf"
     model_id = "meta-llama/Llama-3.2-1B-Instruct"
@@ -29,6 +58,7 @@ if RUN_WITH_MODEL:
         gguf_file = gguf_file,
         torch_dtype=torch.bfloat16,
         device_map="auto",
+        config="./config.json"
     )
 
 class InterviewInstance:
@@ -95,7 +125,7 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 case 3:
                     return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <END> at the beginning of response.
                 """
-        def pipe_inference(self, verbose=False):
+        def pipe_inference(self, verbose=True):
             if RUN_WITH_MODEL:
                 outputs = pipe(self.get_message(),max_new_tokens=256)
                 response = outputs[0]['generated_text'][-1]
@@ -105,11 +135,14 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 self.interview_procedure.pop(0)
             if "<END>" in response:
                 print('time to end')
-                emit("end_of_interview", self.messages)
+                self.end_interview()
+                # emit("end_of_interview", {"chat_history": self.messages})
             self.add_message(role="assistant", content=response)
             if verbose:
                 print("Interviewer response:", response)
             return response
+        def end_interview(self):
+            emit("end_of_interview", {"chat_history": self.messages})
 
 def system_prompt_helper(interviewer_name=None, candidate_name=None, company=None, position_name=None, qualifications=None, behavioral_count=1, 
                          technical_count=1, expected_duration=30, technical_difficulty="medium"):
@@ -256,6 +289,15 @@ def handle_llm_completion(data):
     response = interview_histories[session_id].pipe_inference()
     emit('completion_status', {'status': 'success', 'message': 'Inference completed', 'response': response})
     
+    
+@socketio.on('end_of_interview')
+def end_interview(data):
+    session_id = data['session_id']
+    if session_id in interview_histories:
+        interview_histories[session_id].end_interview()
+    # else:
+    #     emit()
+        
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, port=7230)
