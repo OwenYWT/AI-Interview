@@ -8,6 +8,8 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useNavigate } from 'react-router-dom';
 import { io } from "socket.io-client";
 import { getItem, removeItem } from "../localStorage";
+
+// var currHist = "";
 const socket = io("http://localhost:7230", {
     transports: ["websocket"],
     reconnectionAttempts: 5,
@@ -116,6 +118,9 @@ const ChatPage = () => {
             });
             socket.on('end_of_interview', (status) => {
                 console.log("Backend server ended interview", status);
+                // currHist = status['messageString'];
+                // currHist = "some message"
+                localStorage.setItem("currHist", status['messageString']);
                 navigate('/feedback');
             });
 
@@ -153,7 +158,10 @@ const ChatPage = () => {
     };
 
     const handleGetFeedback = () => {
-        socket.emit("stop_interview", {"session_id": sessionID})
+        socket.emit("end_of_interview", {"session_id": sessionID})
+        setIsRecording(false);
+        console.log("something");
+        console.log(localStorage);
         const data = { "text": "Interviewer: Can you tell me about yourself?\n" +
                 "Interviewee: Uh... yeah, so, um, I'm, uh, John Doe. I, uh, studied... computer science. Yeah, and, um, I've done some, uh, coding... here and there.\n" +
                 "\n" +
@@ -183,7 +191,8 @@ const ChatPage = () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
+            // body: JSON.stringify(data),
+            body: JSON.stringify({"text": localStorage.getItem("currHist")}),
         })
             .then((response) => response.json())
             .then((responseData) => {
@@ -236,7 +245,7 @@ const ChatPage = () => {
                         key={index}
                         sx={{
                             display: 'flex',
-                            justifyContent: message.sender === 'interviewee' ? 'flex-end' : 'flex-start',
+                            justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
                             marginBottom: '10px',
                         }}
                     >
@@ -245,8 +254,8 @@ const ChatPage = () => {
                                 maxWidth: '70%',
                                 padding: '10px',
                                 borderRadius: '10px',
-                                backgroundColor: message.sender === 'interviewee' ? '#1976d2' : '#e0e0e0',
-                                color: message.sender === 'interviewee' ? 'white' : 'black',
+                                backgroundColor: message.sender === 'user' ? '#1976d2' : '#e0e0e0',
+                                color: message.sender === 'user' ? 'white' : 'black',
                             }}
                         >
                             <Typography variant="body1">{message.text}</Typography>

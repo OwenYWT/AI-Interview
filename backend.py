@@ -169,7 +169,13 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 print("Interviewer response:", response)
             return response
         def end_interview(self):
-            emit("end_of_interview", {"chat_history": self.messages})
+            messageString = ""
+            for curr in self.messages:
+                if (curr['role']!='system'):
+                    messageString += "Interviewee: " if curr['role'] == 'user' else "Interviewer: "
+                    messageString += curr['content']+'|'
+            messageString = messageString[:-1]
+            emit("end_of_interview", {"chat_history": self.messages, "messageString": messageString})
 
 def system_prompt_helper(interviewer_name=None, candidate_name=None, company=None, position_name=None, qualifications=None, behavioral_count=1, 
                          technical_count=1, expected_duration=30, technical_difficulty="medium"):
