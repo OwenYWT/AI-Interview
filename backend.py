@@ -49,16 +49,14 @@ if RUN_WITH_MODEL:
     #     filename="Llama-3.2-1B-Instruct-Q4_0_4_4.gguf",
     # )
     
-    model_id = "QuantFactory/Llama-3.2-1B-Instruct-GGUF"
-    gguf_file = "Llama-3.2-1B-Instruct.Q6_K.gguf"
+    # model_id = "QuantFactory/Llama-3.2-1B-Instruct-GGUF"
+    # gguf_file = "Llama-3.2-1B-Instruct.Q6_K.gguf"
     model_id = "meta-llama/Llama-3.2-1B-Instruct"
     pipe = pipeline(
         "text-generation",
         model=model_id,
-        gguf_file = gguf_file,
         torch_dtype=torch.bfloat16,
         device_map="auto",
-        config="./config.json"
     )
 
 class InterviewInstance:
@@ -94,7 +92,10 @@ class InterviewInstance:
                 if (role == 'user'):
                     self.converstation_counter += 1
         def get_message(self):
-                return self.messages.copy().append({"role": "system", "content": self.prepare_realtime_guidance_prompt()})
+            print(self.messages)
+            temp_message = self.messages.copy()
+            temp_message.append({"role": "system", "content": self.prepare_realtime_guidance_prompt()})
+            return temp_message
         def generate_resume_summary(self):
                 if self.resume_file_path is not None and self.resume_file_path != "":
                     resume_summary_prompt, self.resume_content = resume_summarization_prompt_helper(self.resume_file_path)
@@ -127,6 +128,7 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 """
         def pipe_inference(self, verbose=True):
             if RUN_WITH_MODEL:
+                print(self.get_message())
                 outputs = pipe(self.get_message(),max_new_tokens=256)
                 response = outputs[0]['generated_text'][-1]
             else:
