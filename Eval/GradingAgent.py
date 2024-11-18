@@ -15,11 +15,16 @@ model.config.eos_token_id = tokenizer.eos_token_id
 
 def getEval(transcript_text, overall_score, recommendation_score, structured_answers_score):
     prompt_text = (
-        f"Please provide detail evaluation on the interviewee's performance based on the following materials, strengths and weaknesses need to be discussed separately.\n"
-        f"Transcript: {transcript_text}\n"
-        f"Overall Score: {overall_score}/10, Recommendation Score: {recommendation_score}/10, Structured Answers Score: {structured_answers_score}/10.\n"
-        f"Evaluation:\n\n"
+    f"Please analyze the following interview transcript and provide a detailed evaluation. "
+    f"Focus on strengths, weaknesses, and areas for improvement of the interviewee. Do not repeat the transcript verbatim.\n\n"
+    f"Overall Score: {overall_score}/7, Recommendation Score: {recommendation_score}/7, "
+    f"Structured Answers Score: {structured_answers_score}/7.\n\n"
+    f"Transcript:\n{transcript_text}\n\n"
+    f"Evaluation:\n"
     )
+
+    
+
 
 
 
@@ -32,10 +37,11 @@ def getEval(transcript_text, overall_score, recommendation_score, structured_ans
         output = model.generate(
             inputs["input_ids"],
             attention_mask=inputs["attention_mask"],
-            max_new_tokens=500,
-            min_new_tokens=300,   
+            max_new_tokens=500,  
             do_sample=True,
-            repetition_penalty=1.1,
+            temperature=0.7,  
+            top_p=0.9, 
+            repetition_penalty=1.2,
             pad_token_id=tokenizer.eos_token_id,
         )
     
