@@ -174,11 +174,13 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 response = "TEST RESPONSE FROM LLM"
             if "NEXT" in response:
                 self.interview_procedure.pop(0)
-                # response = response.replace("<NEXT>", "")
-                # response = response.replace("NEXT", "")
+                response = response.replace("<NEXT>", "")
+                response = response.replace("NEXT", "")
             if "END" in response:
                 print('time to end')
                 self.end_interview()
+                response = response.replace("<END>", "")
+                response = response.replace("END", "")
                 # emit("end_of_interview", {"chat_history": self.messages})
             self.add_message(role="assistant", content=response)
             if verbose:

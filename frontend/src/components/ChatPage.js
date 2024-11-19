@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { io } from "socket.io-client";
 import { getItem, removeItem } from "../localStorage";
 
+const utterance = new SpeechSynthesisUtterance("");
+utterance.voice =  window.speechSynthesis.getVoices()[191];
 // var currHist = "";
 const socket = io("http://localhost:7230", {
     transports: ["websocket"],
@@ -83,11 +85,12 @@ const ChatPage = () => {
     const playTTS = (text) => {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
+        utterance.voice = window.speechSynthesis.getVoices()[191];
         // utterance.lang = 'en-US';
         utterance.rate = 1.2;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
-        utterance.voice = window.speechSynthesis.getVoices()[191];
+        
 
         window.speechSynthesis.speak(utterance);
 
