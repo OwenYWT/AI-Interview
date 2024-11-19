@@ -22,6 +22,12 @@ const ChatPage = () => {
     const recognitionRef = useRef(null);
     const sessionID = getItem('session_id');
     const silenceTimeoutRef = useRef(null);
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        // Automatically scroll to the bottom when new messages are added
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     useEffect(() => {
         if ('webkitSpeechRecognition' in window && !recognitionRef.current) {
@@ -77,10 +83,11 @@ const ChatPage = () => {
     const playTTS = (text) => {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        utterance.rate = 1.0;
+        // utterance.lang = 'en-US';
+        utterance.rate = 1.2;
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
+        utterance.voice = window.speechSynthesis.getVoices()[191];
 
         window.speechSynthesis.speak(utterance);
 
@@ -116,7 +123,7 @@ const ChatPage = () => {
                     console.log("Backend server received message", status);
                 }
             });
-            socket.on('end_of_interview', (status) => {
+            socket.on('llm_ended_interview', (status) => {
                 console.log("Backend server ended interview", status);
                 // currHist = status['messageString'];
                 // currHist = "some message"
@@ -262,6 +269,7 @@ const ChatPage = () => {
                         </Box>
                     </Box>
                 ))}
+                <div ref={messagesEndRef} /> {/* This div will be used to scroll */}
             </Box>
 
             <Box display="flex" alignItems="center" style={{ borderTop: '1px solid #ccc', paddingTop: '10px' }}>
