@@ -196,7 +196,7 @@ const ChatPage = () => {
                 "Interviewer: Is there anything you’d like to ask us?\n" +
                 "Interviewee: Uh... not really, no." };
 
-        fetch('http://143.215.96.84:8888/process_text3', {
+        fetch('http://143.215.106.81:8888/process_text3', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
