@@ -33,3 +33,33 @@ class HierarchicalInterviewDataset(Dataset):
         parts = transcript.split('|')
         return [p.split(':', 1)[1].strip() for p in parts if ':' in p]
 
+class InterviewDataset(Dataset):
+    def __init__(self, data, tokenizer, max_length=512):
+        self.data = list(data.values())
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        transcript = self.data[idx]["Transcript"]
+        labels = torch.tensor([
+            self.data[idx]["Overall"],
+            self.data[idx]["RecommendHiring"],
+            self.data[idx]["StructuredAnswers"],
+        ], dtype=torch.float)
+        
+        inputs = self.tokenizer(
+            transcript,
+            max_length=self.max_length,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt"
+        )
+        return {
+            "input_ids": inputs["input_ids"].squeeze(),
+            "attention_mask": inputs["attention_mask"].squeeze(),
+            "labels": labels
+        }
+
