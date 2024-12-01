@@ -97,7 +97,7 @@ def get_predicted_scores(model, tokenized_input, device="cpu"):
 def run_interview_scorer(conversation, checkpoint_path="checkpoint1.pth", device=None):
 
     if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = 'mps' if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
     model = load_trained_model(checkpoint_path, device=device)
     tokenized_input, error_message = process_dialogue(conversation)
     if error_message:
