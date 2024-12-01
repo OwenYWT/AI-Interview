@@ -1,0 +1,20 @@
+{
+    "pp139": {
+        "Transcript": "Interviewer: How are you today?|Interviewee: I'm doing great, thank you! How are you?|Interviewer: I'm good. Tell me about a significant achievement in your career.|Interviewee: One of my biggest achievements was leading a cross-functional team to optimize a manufacturing process during my internship. I analyzed production data, identified inefficiencies, and implemented a new workflow that reduced costs by 20% and improved output quality. It was rewarding to see the tangible impact of our efforts and the positive feedback from stakeholders.||Interviewer: Great. How do you handle conflict in a team?|Interviewee: I believe in open communication. For example, during a group project, two team members had differing opinions on how to approach a task. I facilitated a meeting where everyone shared their ideas. We eventually combined the best aspects of both approaches, and the project turned out to be a success.||Interviewer: If you could change one thing about yourself, what would it be?|Interviewee: I’d like to improve my public speaking skills. While I’m comfortable leading smaller teams, I’m working on being more confident when presenting to larger audiences. I’ve started attending workshops to improve this skill, and I’m seeing progress.||Interviewer: Why should we hire you?|Interviewee: I bring a combination of technical expertise, a collaborative mindset, and enthusiasm for this role. I’m excited about your company’s mission and confident that my problem-solving skills and leadership experience can contribute to your team’s success.",
+        "Overall": 6.9,
+        "RecommendHiring": 7.0,
+        "StructuredAnswers": 6.8
+    },
+    "pp140": {
+        "Transcript": "Interviewer: How are you today?|Interviewee: I’m good, thank you! How are you?|Interviewer: Good. Tell me about your background.|Interviewee: I’m a chemical engineering student with a focus on energy systems. I’ve completed a few internships and worked on projects related to alternative energy and optimizing traditional resources.||Interviewer: Do you consider yourself a leader?|Interviewee: Yes, I’ve had leadership roles in clubs and team projects. I believe in working collaboratively and helping team members excel.||Interviewer: Can you give me an example of resolving conflict in a team?|Interviewee: During a group project, two team members disagreed about the project direction. We discussed their ideas, and I helped mediate a compromise that everyone agreed on.||Interviewer: If you could change one thing about yourself, what would it be?|Interviewee: I’d like to be more patient when approaching problems. I sometimes jump into solutions too quickly without fully exploring alternatives.||Interviewer: Why do you think you should get the job?|Interviewee: I think I’d be a great fit because of my technical background and interest in this industry.",
+        "Overall": 6.1,
+        "RecommendHiring": 6.2,
+        "StructuredAnswers": 5.9
+    },
+    "pp141": {
+        "Transcript": "Interviewer: How are you today?|Interviewee: I’m okay, thanks.|Interviewer: Tell me about your background.|Interviewee: I studied engineering. I’ve done some internships and projects, mostly related to energy.||Interviewer: Do you consider yourself a leader?|Interviewee: Yes, I think I am. I’ve been in charge of projects before.||Interviewer: Can you give me an example of resolving conflict in a team?|Interviewee: Not really. We don’t usually have conflicts, but I try to be understanding.|Interviewer: If you could change one thing about yourself, what would it be?|Interviewee: I can be impatient sometimes.||Interviewer: Why do you think you should get the job?|Interviewee: I think I’d do well. I like what your company is doing, and I think it’d be good for me to work here.",
+        "Overall": 4.8,
+        "RecommendHiring": 4.5,
+        "StructuredAnswers": 4.7
+    }
+}

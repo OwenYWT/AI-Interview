@@ -90,19 +90,19 @@ class HierarchicalInterviewScorer(nn.Module):
 class HongzhenAlbertForRegression(nn.Module):
     def __init__(self, model_name, num_outputs=3):
         super(HongzhenAlbertForRegression, self).__init__()
-        self.albert = AlbertModel.from_pretrained(model_name)  # 加载预训练模型
-        self.dropout = nn.Dropout(0.1)  # 添加 Dropout
-        self.regressor = nn.Linear(self.albert.config.hidden_size, num_outputs)  # 回归头
+        self.albert = AlbertModel.from_pretrained(model_name) 
+        self.dropout = nn.Dropout(0.1)  
+        self.regressor = nn.Linear(self.albert.config.hidden_size, num_outputs) 
 
     def forward(self, input_ids, attention_mask, labels=None):
         outputs = self.albert(input_ids=input_ids, attention_mask=attention_mask)
-        pooled_output = outputs[1]  # 获取池化后的句子向量
+        pooled_output = outputs[1]  
         pooled_output = self.dropout(pooled_output)
-        predictions = self.regressor(pooled_output)  # 回归结果
+        predictions = self.regressor(pooled_output) 
         
         loss = None
         if labels is not None:
-            loss_fn = nn.MSELoss()  # 使用均方误差损失函数
+            loss_fn = nn.MSELoss() 
             loss = loss_fn(predictions, labels)
         
         return (loss, predictions) if loss is not None else predictions
