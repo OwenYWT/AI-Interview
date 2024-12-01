@@ -37,6 +37,58 @@ import torch.nn.functional as F
 #         return scores
 
 
+# class TurnAttention(nn.Module):
+#     def __init__(self, hidden_size):
+#         super(TurnAttention, self).__init__()
+#         self.attention = nn.Linear(hidden_size, 1)
+
+#     def forward(self, turn_embeddings):
+#         scores = F.softmax(self.attention(turn_embeddings), dim=1)
+#         attended_representation = torch.sum(scores * turn_embeddings, dim=1)
+#         return attended_representation
+
+
+
+# class HierarchicalInterviewScorer(nn.Module):
+#     def __init__(self, hidden_size=768, num_dialogue_layers=2, dropout=0.3):
+#         super(HierarchicalInterviewScorer, self).__init__()
+        
+#         self.turn_encoder = BertModel.from_pretrained("bert-base-uncased")
+#         for param in self.turn_encoder.parameters():
+#             param.requires_grad = True
+        
+#         self.dialogue_transformer = nn.TransformerEncoder(
+#             nn.TransformerEncoderLayer(d_model=hidden_size, nhead=8, dropout=dropout),
+#             num_layers=num_dialogue_layers
+#         )
+#         self.dropout = nn.Dropout(dropout)
+#         self.layer_norm = nn.LayerNorm(hidden_size)
+#         self.turn_attention = TurnAttention(hidden_size)
+#         self.classifier = nn.Sequential(
+#             nn.Linear(hidden_size, 256),
+#             nn.ReLU(),
+#             nn.Dropout(dropout),
+#             nn.Linear(256, 3)
+#         )
+#     def forward(self, dialogue_turns):
+#         batch_size, num_turns = dialogue_turns["input_ids"].shape[:2]
+#         input_ids = dialogue_turns["input_ids"].view(-1, dialogue_turns["input_ids"].size(-1))
+#         attention_mask = dialogue_turns["attention_mask"].view(-1, dialogue_turns["attention_mask"].size(-1))
+
+#         turn_embeddings = self.turn_encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state[:, 0, :]
+#         turn_embeddings = self.dropout(turn_embeddings)
+#         turn_embeddings = self.layer_norm(turn_embeddings)
+#         turn_embeddings = turn_embeddings.view(batch_size, num_turns, -1)
+        
+#         dialogue_embeddings = self.dialogue_transformer(turn_embeddings.permute(1, 0, 2))
+#         dialogue_representation = dialogue_embeddings.mean(dim=0)
+        
+#         scores = self.classifier(dialogue_representation)
+#         return scores
+
+
+
+
 class TurnAttention(nn.Module):
     def __init__(self, hidden_size):
         super(TurnAttention, self).__init__()
@@ -45,8 +97,7 @@ class TurnAttention(nn.Module):
     def forward(self, turn_embeddings):
         scores = F.softmax(self.attention(turn_embeddings), dim=1)
         attended_representation = torch.sum(scores * turn_embeddings, dim=1)
-        return attended_representation
-
+        return attended_representation, scores
 
 
 class HierarchicalInterviewScorer(nn.Module):
@@ -61,27 +112,33 @@ class HierarchicalInterviewScorer(nn.Module):
             nn.TransformerEncoderLayer(d_model=hidden_size, nhead=8, dropout=dropout),
             num_layers=num_dialogue_layers
         )
-        self.dropout = nn.Dropout(dropout)
-        self.layer_norm = nn.LayerNorm(hidden_size)
+        
         self.turn_attention = TurnAttention(hidden_size)
+        
         self.classifier = nn.Sequential(
             nn.Linear(hidden_size, 256),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(256, 3)
         )
+        
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(hidden_size)
+
     def forward(self, dialogue_turns):
         batch_size, num_turns = dialogue_turns["input_ids"].shape[:2]
         input_ids = dialogue_turns["input_ids"].view(-1, dialogue_turns["input_ids"].size(-1))
         attention_mask = dialogue_turns["attention_mask"].view(-1, dialogue_turns["attention_mask"].size(-1))
-
+        
         turn_embeddings = self.turn_encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state[:, 0, :]
         turn_embeddings = self.dropout(turn_embeddings)
         turn_embeddings = self.layer_norm(turn_embeddings)
-        turn_embeddings = turn_embeddings.view(batch_size, num_turns, -1)
+        turn_embeddings = turn_embeddings.view(batch_size, num_turns, -1) 
         
         dialogue_embeddings = self.dialogue_transformer(turn_embeddings.permute(1, 0, 2))
-        dialogue_representation = dialogue_embeddings.mean(dim=0)
+        dialogue_embeddings = dialogue_embeddings.permute(1, 0, 2)
+        attended_representation, attention_scores = self.turn_attention(dialogue_embeddings)
         
-        scores = self.classifier(dialogue_representation)
-        return scores
+        scores = self.classifier(attended_representation)
+        
+        return scores, attention_scores
