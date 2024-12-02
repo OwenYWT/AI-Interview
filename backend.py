@@ -135,7 +135,7 @@ to think about it. Look at previous converstation and if you think you have talk
             You can give the candidate some time to think about it. Do not give away the answer even if the candidate ask for it. Be careful with your hint. 
 If you think you have enough from the candidate and ready to wrap up this interview, add <NEXT> at the beginning of response."""
             elif self.interview_procedure[0] == 3:
-                return """Take some time to wrap up or for Q&A. If it's time to end the converstation, add <END> at the beginning of response to stop this interview.
+                return """Take some time to wrap up or for Q&A. If it's time to end the conversation, add <END> at the beginning of response to stop this interview.
                 """
             
 #             match self.interview_procedure[0]:
