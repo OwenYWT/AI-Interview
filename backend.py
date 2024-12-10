@@ -164,7 +164,7 @@ If you think you have enough from the candidate and ready to wrap up this interv
                 # outputs = llm.create_chat_completion(messages=self.get_message(),response_format={"type": "json_object"})
                 # response = outputs['choices'][0]['message']['content']
                 ### This is using ollama 
-                outputs = ollama.chat(model='llama3.2:3b', messages=self.get_message())
+                outputs = ollama.chat(model='llama3.2:1b', messages=self.get_message())
                 # outputs = ollama.chat(model='llama3.2:3b', messages=self.messages)
                 # outputs = ollama.chat(model='llama3.2:1b', messages=self.messages)
             #     outputs = ollama.chat(model='llama3.2:3b', messages=[{'role': 'system', 'content': 'This is the transcript between an interviewer and cadidate for potential jobs. '}, 
