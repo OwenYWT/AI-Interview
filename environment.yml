@@ -1,0 +1,29 @@
+name: ai-interview
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - jupyter
+  - matplotlib
+  - mypy
+  - numpy
+  - pandas
+  - plotly
+  - pytest
+  - python>=3.12
+  - pyyaml
+  - pytorch
+  - torchvision
+  - tqdm
+  - Pillow
+  - opencv
+  - colour
+  - scipy
+  - ollama
+  - transformers
+  - flask
+  - flask-socketio
+  - pypdf
+  - pip
+  - pip:
+    - llama-cpp-python
