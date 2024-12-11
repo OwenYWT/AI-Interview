@@ -27,3 +27,5 @@ dependencies:
   - pip
   - pip:
     - llama-cpp-python
+    - ollama
+    - eventlet
