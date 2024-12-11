@@ -1,5 +1,5 @@
 # AI-Interview
-## Group 7
+## Group 4
 
 Create a conda environment with `conda env create -f environment.yml`
 
