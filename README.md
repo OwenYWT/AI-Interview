@@ -26,4 +26,5 @@ Each base_model folder contains an implementation of BERT based grading model. E
 
 Llama fine tuning is included in llama_finetune folder. Please note that Meta Llama requires access authorization and thus you will need to obtain access to gated model to run fine tune.
 The fine tuning note book contains cells that allows you to test run the model with the model loaded. If you are instrested in trying with out fine-tuned checkpoint, please download it from: https://gtvault-my.sharepoint.com/:f:/g/personal/bsong74_gatech_edu/Et7ZsxiLD1FBoxNASe538yoBC6DRclFcpji9CpcUD0MgHw?e=q9Y2xp You will need GT credential to access.
+
 Note that in our web app, the final grading requires remotely connected to one of the grading model (since running two or more LLMs on device at the same time is difficult with limited hardware.) 
