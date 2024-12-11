@@ -10,3 +10,4 @@ Eval/*.yaml
 Models/*
 Analysis/*.png
 llama_finetune/llama-3.2-3b-full-ft-interview-lowlr/checkpoint-102/model-00002-of-00002.safetensors
+llama_finetune/llama-3.2-3b-full-ft-interview-lowlr/checkpoint-102/model-00001-of-00002.safetensors
